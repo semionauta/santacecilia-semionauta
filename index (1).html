@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="Santa Cecilia & Semionauta is a multidisciplinary duo exploring sound, technology, and performance across Europe.">
+  <meta name="keywords" content="Santa Cecilia, Semionauta, experimental music, live performance, sound art, interdisciplinary art, Transumanza, Trascendenze Artificiali">
+  <meta name="author" content="Santa Cecilia & Semionauta">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Santa Cecilia & Semionauta | Experimental Sound, Art & Performance Duo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400&display=swap" rel="stylesheet">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    * { /*AGGIUNGI FAVICON AL WEBSITE!*/
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0.5rem 0.5rem;
+      padding: 0;      
+      font-family: 'Roboto', sans-serif;
+      background: #fff;
+      color: #000;
+      line-height: 1;
+    }
+    header {
+      padding: 5rem 2rem 5rem 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    header h1 {
+      font-size: 5rem;
+      margin: 0;
+      font-weight: 400;
+      line-height: 1;      
+      text-align: left;
+    }
+    main {
+      max-width: 100%;
+      margin: 0rem auto;
+      padding: 0 0rem;
+      line-height: 1;       
+    }
+    .grid-container {
+      display: grid;
+      gap: 0rem 0rem;
+    }
+    /* questo serve per fare le colonne se lo schermo è abbastanza grande*/
+    @media (min-width: 600px) {
+      .grid-container {
+        grid-template-columns: 1fr 0.6fr;
+      }
+      .grid-container > section {
+        padding: 1rem 0rem 1rem 0rem;
+      }
+    #videos,
+    #slideshow,
+    #releases {
+        grid-column: 1 / -1;
+      }
+    }
+    section {
+      border-bottom: 1px solid #000;       
+      background-color: transparent;
+      opacity: 0;
+          /*border: 1px solid #ddd;*/
+      transform: translateY(50px);
+      transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+      line-height: 1.2; 
+      margin: 1rem 0rem;
+    }
+    section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    h2 {
+      font-weight: 400;
+      font-size: 2rem;
+      margin-top: 0;
+      padding: 0rem 0.5rem;
+      line-height: 1;       
+    }
+    section p, section li {
+      font-size: 0.8rem;
+      line-height: 1.2;
+      transition: line-height 0.3s ease;
+      font-weight: 300;
+      padding: 0rem 1rem;
+    }
+    footer {
+      /*border-top: 1px solid #000;*/
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.7rem;
+      margin-bottom: 4rem;
+    }
+    ul {
+      list-style: none;
+      padding: 0rem 0rem;
+      line-height: 1;       
+    }
+    ul li {
+      margin-bottom: 0.5rem;
+    }
+    .video-gallery {
+      will-change: transform, opacity;
+      display: flex;
+      overflow-x: auto;
+      gap: 1rem;
+      padding: 0rem 0rem;
+      margin: 2rem 0rem;
+      width: 100%;
+    }
+    .video-gallery iframe {
+      width: 100%; /* Make videos responsive */
+      max-width: 300px;
+      height: 170px;
+      border: none;
+    }
+.slideshow {
+  will-change: transform, opacity;
+  display: flex;
+  overflow-x: auto;
+  gap: 0rem;
+  padding: 0rem;
+  margin: 2rem 0rem;
+  background: transparent;
+  max-height: 56.25vw;
+  width: 100%;
+ cursor: pointer;
+}
+
+.slideshow img {
+  width: 100%;
+  max-height: 56.25vw;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+/* stile.css */
+a {
+  color: black;
+  text-decoration: none;
+  font-weight: normal;
+  font-style: normal;
+  transition: color 0.75s ease, text-decoration 0.3s ease;
+}
+
+a:hover {
+  color: white;
+  text-decoration: none;
+  display: inline-block;
+  background-color: black;  
+}
+/* Releases  */
+    .gallery {
+      will-change: transform, opacity;
+      display: flex;
+      overflow-x: auto;      
+      flex-wrap: nowrap;
+      gap: 20px;
+      width: 100%;    
+      margin: 2rem 0rem;      
+    }
+
+    .gallery a {
+      flex: 1 1 300px;
+      max-width: 300px;
+      text-decoration: none;
+      width: 100%;
+    }
+
+    .gallery img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: none;
+    }
+    
+     @media (max-width: 600px) {
+      .gallery {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .gallery a {
+        max-width: 90%;
+      }
+    }
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  header h1 {
+    font-size: 2.5rem; /* Smaller font size for mobile */
+  }
+  h2 {
+    font-size: 2.5rem; /* Smaller font size for mobile */
+  }  
+
+  .grid-container {
+    grid-template-columns: 1fr; /* Stack sections on mobile */
+  }
+
+  .video-gallery {
+    flex-direction: column;
+      width: 100%;    
+  }
+  
+ .video-gallery iframe {
+      flex: 0 0 auto;
+      width: 100%; /* Make videos responsive */
+      max-width: 600px;
+      height: 56.25vw;
+      
+    }
+
+  .slideshow img {
+    width: 100%;
+    height: auto;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <header>
+    <h1>SANTA CECILIA & SEMIONAUTA</h1>
+  <div class="slideshow" id="slideshow1" onclick="nextSlide('slideshow1')">
+    <img loading="lazy" src="https://t-magazine.com/wp-content/uploads/2024/08/Press-picture-3-Santa-Cecilia-Semionauta-by-Angelo-Guttadauro-scaled.jpeg" alt="Santa Cecilia & Semionauta at Fabbrica Europa Festival 2023">
+    <img loading="lazy" src="https://t-magazine.com/wp-content/uploads/2024/08/Press-picture-5-Santa-Cecilia-by-Angelo-Guttadauro-scaled.jpeg" alt="Santa Cecilia performing at Fabbrica Europa Festival 2023">
+    <img loading="lazy" src="https://f4.bcbits.com/img/0036628073_25.jpg" alt="Santa Cecilia & Semionauta performing at Tenuta Dello Scompiglio 2024">
+    <img loading="lazy" src="https://anxiousmagazine.pl/wp-content/uploads/2024/10/Transumanza-1-1800x1201.jpg" alt="Santa Cecilia & Semionauta performing at SITU Festival 2024">
+  </div>
+  </header>
+
+  <main>
+    <div class="grid-container">
+    
+      <section id="performances">
+        <h2>SELECTED WORKS</h2>
+        <ul>
+<li>AUG 2025 | RORÀ (IT) — Stone Oven House — Transumanza, Live Performance</li>
+<li>MAY 2025 | BERLIN (DE) — Manifest: IO Festival — Transumanza, Live Performance</li>
+<li>APR 2025 | ROME (IT) — Spazio Recherche — Transumanza, Live Performance</li>
+<li>OCT 2024 | AMSTERDAM (NL) — Subbacultcha & Strange Therapy — Tell Me To Sin, Live Performance</li>
+<li>SEP 2024 | MODICA (IT) — SITU Festival — Transumanza, Immersive Performance</li>
+<li>JUN 2024 | LONDON (UK) — The Bath House — Trascendenze Artificiali, Live</li>
+<li>MAY 2024 | LUCCA (IT) — Associazione Dello Scompiglio — Trascendenze Artificiali Act II, 4h Durational Performance</li>
+<li>APR 2024 | FLORENCE (IT) — Artiglieria — Live Soundtrack n.77, Live</li>
+<li>MAY 2023 | FLORENCE (IT) — Fabbrica Europa Festival — Trascendenze Artificiali Act I, Workshop-Based Durational Performance</li>
+<li>OCT 2021 | PRATO (IT) — Officina Giovani — Adieu Au Langage, Live Performance</li>
+<li>MAY 2022 | BERGAMO (IT) — Midi Motori Digitali— Naturæ Mortæ, AI Video Installation</li>
+<li>DEC 2021 | FLORENCE (IT) — Fabbrica Europa — Naturæ Mortæ, AI Workshop</li>
+        </ul>
+      </section>
+      
+    <section id="discography">
+        <h2>DISCOGRAPHY</h2>
+        <ul>
+      <li>2025 | Trascendenze Artificiali: Act I. (Strange Therapy, LP + BOOKLET)</li>
+      <li><a href="https://santacecilia-semionauta.bandcamp.com/album/tell-me-to-sin">2024 | Tell Me To Sin. (Strange Therapy, TAPE)</a></li>
+      <li><a href="https://ooh-sounds.bandcamp.com/album/leave-no-trace-unethical-camping-in-the-network">2021 | Leave No Trace. (OOH-sounds, TAPE)</a></li>
+        </ul>
+        <br>
+        <br>
+        <br>
+        <br>
+     <h2>RESIDENCIES</h2>
+        <ul>
+      <li>AUG 2025 | RORÀ (IT) — Stone Oven House</li>
+      <li>AUG 2024 | MODICA (IT) — SITU Festival</li>
+      <li>JUN 2024 | PISTOIA (IT) — Nub Project Space</li>
+        </ul>
+      </section>
+      
+        <section id="videos">
+        <h2>FULL PERFORMANCES</h2>
+        <div class="video-gallery">
+          <iframe loading="lazy" src="https://www.youtube.com/embed/yWK0s5O0XVs" allowfullscreen></iframe>
+          <iframe loading="lazy" src="https://www.youtube.com/embed/tdhR2FapkFY" allowfullscreen></iframe>
+          <iframe loading="lazy" src="https://www.youtube.com/embed/iY24ZNH2cqs" allowfullscreen></iframe>
+          <iframe loading="lazy" src="https://www.youtube.com/embed/6brefyLdk4U" allowfullscreen></iframe>
+        </div>
+      </section>    
+      
+     <section id="press">
+        <h2>SELECTED PRESS</h2>
+        <ul>
+          <li><a href="https://thequietus.com/quietus-reviews/cassettes/spools-out-cassette-reviews-for-september-by-daryl-worthington/" target="_blank">The Quietus, Daryl Worthington — Read Here</a></li>
+          <li><a href="https://t-magazine.com/en/news/tell-me-to-sin-il-debutto-ipnotico-di-santa-cecilia-semionauta-su-strange-therapy/" target="_blank">T-Magazine, Giulia Maria Scrocchi — Read Here</a></li>
+          <li><a href="https://www.inthenet.eu/2024/06/21/trascendenze-artificiali/" target="_blank">In The Net, Simona Frigerio — Read Here</a></li>
+          <li><a href="https://anxiousmagazine.pl/wywiady/santa-cecilia-semionauta-an-anthem-to-courage-and-beauty/" target="_blank">Anxious Magazine, Artur Mieczkowski — Read Here</a></li>
+        </ul>
+        <br>
+        <br>
+        <br>
+        <br>
+        <h2>CONNECT</h2>
+        <ul>
+        <li><a href="https://santacecilia-semionauta.bandcamp.com/" target="_blank">Bandcamp</a></li>
+        <li><a href="https://www.youtube.com/@ecosistemiartificiali" target="_blank">YouTube</a></li>
+        <li><a href="https://www.instagram.com/santacecilialovesu/" target="_blank">@santacecilialovesu</a>, <a href="https://www.instagram.com/xsemionautax/" target="_blank">@xsemionautax</a></li>
+        </ul>
+        <br>
+        <br>
+        <br>
+        <br>
+        <h2>BOOKINGS</h2>
+         <p><a href="mailto:ecosistemiartificiali@gmail.com">ecosistemiartificiali@gmail.com</a></p>
+      </section>
+
+      <section id="about">
+        <h2>ABOUT</h2>
+        <p>Santa Cecilia & Semionauta converge in a collaboration that merges the artistic visions of Cecilia Lentini and Giordano Fiacchini.</p>
+        <p>Their research focuses on experiential works that, through music, light design, body, and technology, create dreamlike spaces and parallel dimensions. Real-time compositions, installations, and performances immerse the audience in continuously evolving narrative tensions.</p>
+        <p>Interdisciplinary collaborations with artists from diverse fields fuel the direction of monumental durational performances, where each practice is explored both dramaturgically and symbolically.</p>
+        <p>Their work, presented at contemporary music and art festivals, transforms these spaces into hubs of research and experimentation. Here, they establish site-specific dialogues with the environment—often industrial—and with the artists involved, developing a hybrid, workshop-based practice where critical exchange fuels the artistic process.</p>
+        <p>Their intent is to unify a collective vision, where different perspectives are valued both aesthetically and conceptually.</p>
+        <p>In recent years, the duo’s research has centered on collective memory, revisiting ancient sounds, traditional instruments, and ancestral vocalities. Their work explores the mythical realm of archetypal imagination, juxtaposing ancient memories with contemporary symbols of Mediterranean folklore.</p>
+        <p>Since 2020, they have been the founders and artistic directors of Ecosistemi Artificiali, a platform dedicated to the intersection of art and technology. The project promotes hybrid formats between artistic practice and education, fostering collaborations with cultural institutions, festivals, and universities.</p>
+      </section>
+      
+<section id="slideshow">
+  <div class="slideshow" id="slideshow2" onclick="nextSlide('slideshow2')">
+    <img loading="lazy" src="https://anxiousmagazine.pl/wp-content/uploads/2024/09/Trascendenze-Artificiali-Act-I-6-1800x1200.jpg" alt="Performance 1">
+    <img loading="lazy" src="https://anxiousmagazine.pl/wp-content/uploads/2024/09/Trascendenze-Artificiali-Act-II-9-1800x1208.jpg" alt="Performance 2">
+    <img loading="lazy" src="https://www.inthenet.eu/wp-content/uploads/2024/06/image001.jpg" alt="Performance 3">
+  </div>
+</section>
+   
+ <section id="releases"> 
+     <h2>RELEASES</h2>
+     <div class="gallery">
+      <a href="https://santacecilia-semionauta.bandcamp.com/" target="_blank">
+      <img loading="lazy" src="https://f4.bcbits.com/img/a2601083373_10.jpg" alt="Release 1">
+    </a>
+    <a href="https://santacecilia-semionauta.bandcamp.com/album/tell-me-to-sin" target="_blank">
+      <img loading="lazy" src="https://f4.bcbits.com/img/a1170096713_10.jpg" alt="Release 2">
+    </a>
+    <a href="https://ooh-sounds.bandcamp.com/album/leave-no-trace-unethical-camping-in-the-network" target="_blank">
+      <img loading="lazy" src="https://f4.bcbits.com/img/a4051440189_10.jpg" alt="Release 3">
+    </a>
+  </div>
+    </section>
+    
+  </main>
+
+  <footer>
+    <p>&copy; Santa Cecilia & Semionauta – All rights reserved.</p>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const adjustLineHeight = () => {
+        const sections = document.querySelectorAll('section p, section li');
+        const scrollPos = window.scrollY;
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        const scaleFactor = Math.min(Math.max(scrollPos / maxScroll, 0), 1);
+        const lineHeight = 1.4 + (scaleFactor * 0.6);
+        sections.forEach(section => {
+          section.style.lineHeight = lineHeight;
+        });
+      };
+
+      window.addEventListener('scroll', adjustLineHeight);
+
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          } else {
+            entry.target.classList.remove('visible');
+          }
+        });
+      }, { threshold: 0.2,
+      rootMargin: '0px 0px -10% 0px'
+      });
+
+      document.querySelectorAll('section').forEach(section => {
+        observer.observe(section);
+      });
+
+      adjustLineHeight();
+    });
+  </script>
+  
+<script>
+  const currentIndices = {};
+
+  function nextSlide(id) {
+    const slideshow = document.getElementById(id);
+    const images = slideshow.querySelectorAll('img');
+    if (!currentIndices[id] && currentIndices[id] !== 0) currentIndices[id] = 0;
+
+    images[currentIndices[id]].style.display = 'none';
+    currentIndices[id] = (currentIndices[id] + 1) % images.length;
+    images[currentIndices[id]].style.display = 'block';
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll('.slideshow').forEach(slideshow => {
+      const id = slideshow.id;
+      const images = slideshow.querySelectorAll('img');
+      currentIndices[id] = 0;
+      images.forEach((img, i) => {
+        img.style.display = (i === 0) ? 'block' : 'none';
+      });
+
+      // Avvio dello scorrimento automatico ogni 4 secondi
+      setInterval(() => nextSlide(id), 3000);
+    });
+  });
+</script>
+
+</body>
+</html>
