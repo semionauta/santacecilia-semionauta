@@ -1,5 +1,5 @@
 // --- Effetto scroll e line-height dinamico ---
-  document.addEventListener('DOMContentLoaded', () => {
+/*  document.addEventListener('DOMContentLoaded', () => {
     const sectionsText = document.querySelectorAll('section p, section li');
     let lastLineHeight = null;
 
@@ -47,7 +47,25 @@
     document.querySelectorAll('section').forEach(section => observer.observe(section));
 
     smoothLineHeight(); // iniziale
+  }); */
+
+  document.addEventListener('DOMContentLoaded', () => {
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, {
+    threshold: 0.2,
+    rootMargin: '0px 0px -10% 0px'
   });
+
+  document.querySelectorAll('section').forEach(section => {
+    observer.observe(section);
+  });
+});
   
 // --- Slideshow ---
   const currentIndices = {};
