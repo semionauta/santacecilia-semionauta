@@ -4,6 +4,7 @@
     let lastLineHeight = null;
 
     const smoothLineHeight = () => {
+        if (window.innerWidth <= 600) return;
       const scrollPos = window.scrollY;
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
       const scaleFactor = Math.min(Math.max(scrollPos / maxScroll, 0), 1);
