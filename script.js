@@ -1,37 +1,52 @@
 // --- Effetto scroll e line-height dinamico ---
-    document.addEventListener('DOMContentLoaded', () => {
-      const adjustLineHeight = () => {
-        const sections = document.querySelectorAll('section p, section li');
-        const scrollPos = window.scrollY;
-        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-        const scaleFactor = Math.min(Math.max(scrollPos / maxScroll, 0), 1);
-        const lineHeight = 1.4 + (scaleFactor * 0.6);
-        sections.forEach(section => {
-          section.style.lineHeight = lineHeight;
+  document.addEventListener('DOMContentLoaded', () => {
+    const sectionsText = document.querySelectorAll('section p, section li');
+    let lastLineHeight = null;
+
+    const smoothLineHeight = () => {
+      const scrollPos = window.scrollY;
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const scaleFactor = Math.min(Math.max(scrollPos / maxScroll, 0), 1);
+      const newLineHeight = (1.4 + (scaleFactor * 0.6)).toFixed(2);
+
+      // Applica solo se cambia visibilmente
+      if (newLineHeight !== lastLineHeight) {
+        sectionsText.forEach(el => {
+          el.style.lineHeight = newLineHeight;
         });
-      };
+        lastLineHeight = newLineHeight;
+      }
+    };
 
-      window.addEventListener('scroll', adjustLineHeight);
-
-      const observer = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-            observer.unobserve(entry.target);
-          } else {
-            entry.target.classList.remove('visible');
-          }
+    // Usa requestAnimationFrame per ottimizzare lo scroll
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          smoothLineHeight();
+          ticking = false;
         });
-      }, { threshold: 0.2,
-      rootMargin: '0px 0px -10% 0px'
-      });
-
-      document.querySelectorAll('section').forEach(section => {
-        observer.observe(section);
-      });
-
-      adjustLineHeight();
+        ticking = true;
+      }
     });
+
+    // Intersection Observer per l’animazione d’entrata
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target); // osserva solo 1 volta
+        }
+      });
+    }, {
+      threshold: 0.2,
+      rootMargin: '0px 0px -10% 0px'
+    });
+
+    document.querySelectorAll('section').forEach(section => observer.observe(section));
+
+    smoothLineHeight(); // iniziale
+  });
   
 // --- Slideshow ---
   const currentIndices = {};
