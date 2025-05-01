@@ -66,6 +66,9 @@
       line-height: 1.2; 
       margin: 1rem 0rem;
     }
+    .no-border {
+      border-bottom: none;
+    }
     section.visible {
       opacity: 1;
       transform: translateY(0);
