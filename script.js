@@ -1,5 +1,4 @@
 // --- SCRIPT: Progressive Loading
-  <script>
     // Nasconde tutto tranne l'header
     document.addEventListener("DOMContentLoaded", function () {
       const slideshow = document.getElementById("slideshow1");
@@ -17,7 +16,6 @@
         }, 1000); // dopo 1s
       }, 500); // slideshow dopo 0.5s
     });
-  </script>
 
 // --- Effetto scroll e line-height dinamico ---
 /*  document.addEventListener('DOMContentLoaded', () => {
