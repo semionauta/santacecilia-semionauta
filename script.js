@@ -1,3 +1,24 @@
+// --- SCRIPT: Progressive Loading
+  <script>
+    // Nasconde tutto tranne l'header
+    document.addEventListener("DOMContentLoaded", function () {
+      const slideshow = document.getElementById("slideshow1");
+      const main = document.querySelector("main");
+
+      // Inizialmente nascondi slideshow e main
+      slideshow.style.display = "none";
+      main.style.display = "none";
+
+      // Mostra solo il titolo (header è già visibile)
+      setTimeout(() => {
+        slideshow.style.display = "block"; // mostra slideshow
+        setTimeout(() => {
+          main.style.display = "block"; // poi mostra il resto
+        }, 1000); // dopo 1s
+      }, 500); // slideshow dopo 0.5s
+    });
+  </script>
+
 // --- Effetto scroll e line-height dinamico ---
 /*  document.addEventListener('DOMContentLoaded', () => {
     const sectionsText = document.querySelectorAll('section p, section li');
