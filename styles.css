@@ -1,7 +1,7 @@
     {
       box-sizing: border-box;
     }
-    /* Font */  
+/* ----------Font---------- */  
     @font-face {
      font-family: 'Grotesk';
      src: url('https://semionauta.github.io/santacecilia-semionauta/assets/font/AkzidenzGroteskPro-Regular.otf') format('otf');
@@ -59,11 +59,11 @@
     
     
     
-    
+/* ----------Navbar---------- */
     /* Navbar hidden by default */
     nav {
       background: transparent; /* starts transparent */
-      padding: 10px 20px;
+      padding: 20px 20px;
       position: fixed;
       top: 0;
       left: 0;
@@ -88,6 +88,7 @@
       background: rgba(255,255,255,1);
     }
 
+/* ----------Menu Hamburger Icon---------- */
     .menu-toggle {
       width: 35px;
       height: 25px;
@@ -108,7 +109,6 @@
       border-radius: 0px;
       transition: all 0.3s ease;
     }
-
 
 /* Initial positions */
 .menu-toggle span:nth-child(1) { top: 10px; }
@@ -132,6 +132,8 @@
   transform-origin: center;
 }
 
+/* ----------Menu List---------- */
+
     /* Menu fade in/out */
     .menu {
       opacity: 0;
@@ -145,7 +147,7 @@
       margin-top: 0;
       padding: 0rem 1rem;
       line-height: 1rem;   
-      top: 45px;
+      top: 65px;
       left: 0;
       width: 100%;
       pointer-events: none; /* prevent clicks when hidden */
@@ -179,7 +181,7 @@
     transition: color 0.75s ease
 }
 
-
+/* ----------Section---------- */
     
     section {
       border-bottom: 2px solid #000;       
@@ -259,7 +261,7 @@
   background: transparent;
   max-height: 56.25vw;
   width: 100%;
- cursor: pointer;
+  cursor: pointer;
 }
 
 .slideshow img {
@@ -271,7 +273,7 @@
   flex: 0 0 auto;
 }
 
-/* stile.css */
+
 a {
   color: black;
   text-decoration: none;
