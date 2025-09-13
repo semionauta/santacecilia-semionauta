@@ -56,6 +56,131 @@
         grid-column: 1 / -1;
       }
     }
+    
+    
+    
+    
+    /* Navbar hidden by default */
+    nav {
+      background: transparent; /* starts transparent */
+      padding: 10px 20px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      opacity: 0;
+      transform: translateY(-100%);
+      transition: opacity 0.3s ease, transform 0.3s ease, background 0.3s ease;
+      z-index: 1000;
+      box-shadow: none;
+    }
+
+    nav.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Navbar background when menu is active */
+    nav.menu-open {
+      background: rgba(255,255,255,1);
+    }
+
+    .menu-toggle {
+      width: 35px;
+      height: 25px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      border: none;
+      background: none;
+      z-index: 1100;
+    }
+
+    .menu-toggle span {
+     display: block;
+      height: 2px;
+      width: 100%;
+      background: #111;
+      border-radius: 0px;
+      transition: all 0.3s ease;
+    }
+
+
+/* Initial positions */
+.menu-toggle span:nth-child(1) { top: 10px; }
+.menu-toggle span:nth-child(2) { center: 10px; }
+.menu-toggle span:nth-child(3) { bottom: 10px; }
+
+ /* Hamburger animation for perfect X */
+.menu-toggle.active span:nth-child(1) {
+  top: 50%;
+  transform: rotate(45deg);
+  transform-origin: center;
+}
+
+.menu-toggle.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.menu-toggle.active span:nth-child(3) {
+  top: 50%;
+  transform: rotate(-45deg);
+  transform-origin: center;
+}
+
+    /* Menu fade in/out */
+    .menu {
+      opacity: 0;
+      transform: translateY(-20px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      flex-direction: column;
+      background: rgba(255,255,255,1);
+      position: absolute;
+      font-weight: 400;
+      font-size: 2rem;
+      margin-top: 0;
+      padding: 0rem 1rem;
+      line-height: 1rem;   
+      top: 45px;
+      left: 0;
+      width: 100%;
+      pointer-events: none; /* prevent clicks when hidden */
+    }
+
+    .menu a {
+      font-weight: 400;
+      font-size: 2rem;
+      line-height: 1.1;
+      margin-top: 0;
+      padding: 0rem 0rem;
+      text-decoration: none;
+      text-align: center;  /* centered */
+      color: #111;
+      /* display: block; */
+    }
+
+    .menu.active {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto; /* enable clicks when visible */
+    }
+.menu a::before {
+  content: "→";        /* The arrow symbol, you can change it */
+  margin-right: 10px;  /* Space between arrow and text */
+  color: #111;         /* Arrow color */
+  font-weight: 400;
+}
+.menu a:hover::before {
+  color: white;
+    transition: color 0.75s ease
+}
+
+
+    
     section {
       border-bottom: 2px solid #000;       
       background-color: transparent;
@@ -158,7 +283,7 @@ a {
 a:hover {
   color: white;
   text-decoration: none;
-  display: inline-block;
+/*   display: inline-block;   */
   background-color: black;  
 }
 /* Releases  */

@@ -1,54 +1,3 @@
-// --- Effetto scroll e line-height dinamico ---
-/*  document.addEventListener('DOMContentLoaded', () => {
-    const sectionsText = document.querySelectorAll('section p, section li');
-    let lastLineHeight = null;
-
-    const smoothLineHeight = () => {
-        if (window.innerWidth <= 600) return;
-      const scrollPos = window.scrollY;
-      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-      const scaleFactor = Math.min(Math.max(scrollPos / maxScroll, 0), 1);
-      const newLineHeight = (1.4 + (scaleFactor * 0.6)).toFixed(2);
-
-      // Applica solo se cambia visibilmente
-      if (newLineHeight !== lastLineHeight) {
-        sectionsText.forEach(el => {
-          el.style.lineHeight = newLineHeight;
-        });
-        lastLineHeight = newLineHeight;
-      }
-    };
-
-    // Usa requestAnimationFrame per ottimizzare lo scroll
-    let ticking = false;
-    window.addEventListener('scroll', () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          smoothLineHeight();
-          ticking = false;
-        });
-        ticking = true;
-      }
-    });
-
-    // Intersection Observer per l’animazione d’entrata
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          observer.unobserve(entry.target); // osserva solo 1 volta
-        }
-      });
-    }, {
-      threshold: 0.2,
-      rootMargin: '0px 0px -10% 0px'
-    });
-
-    document.querySelectorAll('section').forEach(section => observer.observe(section));
-
-    smoothLineHeight(); // iniziale
-  }); */
-
   document.addEventListener('DOMContentLoaded', () => {
   const observer = new IntersectionObserver(entries => {
     entries.forEach(entry => {
@@ -66,6 +15,28 @@
     observer.observe(section);
   });
 });
+
+// --- Navbar ---
+    const navbar = document.getElementById("navbar");
+    const toggle = document.querySelector(".menu-toggle");
+    const menu = document.querySelector(".menu");
+
+    toggle.addEventListener("click", () => {
+      menu.classList.toggle("active");
+      toggle.classList.toggle("active");
+      navbar.classList.toggle("menu-open");
+    });
+
+    window.addEventListener("scroll", () => {
+      if (window.scrollY > 100) {
+        navbar.classList.add("visible");
+      } else {
+        navbar.classList.remove("visible");
+        menu.classList.remove("active");
+        toggle.classList.remove("active");
+        navbar.classList.remove("menu-open");
+      }
+    });
   
 // --- Slideshow ---
   const currentIndices = {};
