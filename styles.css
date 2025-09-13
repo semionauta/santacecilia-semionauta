@@ -42,22 +42,6 @@
       display: grid;
       gap: 0rem 0rem 0rem 0rem;
     }
-    /* questo serve per fare le colonne se lo schermo e abbastanza grande */
-    @media (min-width: 600px) {
-      .grid-container {
-        grid-template-columns: 1fr 0.8fr;
-      }
-      .grid-container > section {
-        padding: 1rem 0rem 1rem 0rem;
-      }
-    #videos,
-    #slideshow,
-    #releases {
-        grid-column: 1 / -1;
-      }
-    }
-    
-    
     
 /* ----------Navbar---------- */
     /* Navbar hidden by default */
@@ -111,26 +95,24 @@
     }
 
 /* Initial positions */
-.menu-toggle span:nth-child(1) { top: 10px; }
-.menu-toggle span:nth-child(2) { center: 10px; }
-.menu-toggle span:nth-child(3) { bottom: 10px; }
+   .menu-toggle span:nth-child(1) { top: 10px; }
+   .menu-toggle span:nth-child(2) { center: 10px; }
+   .menu-toggle span:nth-child(3) { bottom: 10px; }
 
  /* Hamburger animation for perfect X */
-.menu-toggle.active span:nth-child(1) {
-  top: 50%;
-  transform: rotate(45deg);
-  transform-origin: center;
-}
-
-.menu-toggle.active span:nth-child(2) {
-  opacity: 0;
-}
-
-.menu-toggle.active span:nth-child(3) {
-  top: 50%;
-  transform: rotate(-45deg);
-  transform-origin: center;
-}
+   .menu-toggle.active span:nth-child(1) {
+    top: 50%;
+    transform: rotate(45deg);
+    transform-origin: center;
+   }
+   .menu-toggle.active span:nth-child(2) {
+    opacity: 0;
+   }
+   .menu-toggle.active span:nth-child(3) {
+    top: 50%;
+    transform: rotate(-45deg);
+    transform-origin: center;
+   }
 
 /* ----------Menu List---------- */
 
@@ -150,6 +132,8 @@
       top: 65px;
       left: 0;
       width: 100%;
+      max-width: 95vw;      /* never wider than viewport */
+      /* overflow-x: hidden;  stop horizontal scroll */
       pointer-events: none; /* prevent clicks when hidden */
     }
 
@@ -158,28 +142,27 @@
       font-size: 2rem;
       line-height: 1.1;
       margin-top: 0;
-      padding: 0rem 0rem;
+      display: inline;
+      padding: 0 0;
       text-decoration: none;
       text-align: center;  /* centered */
       color: #111;
-      /* display: block; */
     }
-
     .menu.active {
       opacity: 1;
       transform: translateY(0);
       pointer-events: auto; /* enable clicks when visible */
     }
-.menu a::before {
-  content: "→";        /* The arrow symbol, you can change it */
-  margin-right: 10px;  /* Space between arrow and text */
-  color: #111;         /* Arrow color */
-  font-weight: 400;
-}
-.menu a:hover::before {
-  color: white;
-    transition: color 0.75s ease
-}
+    .menu a::before {
+      content: "→";        /* The arrow symbol, you can change it */
+      margin-right: 10px;  /* Space between arrow and text */
+      color: #111;         /* Arrow color */
+      font-weight: 400;
+    }
+   .menu a:hover::before {
+     color: white;
+     transition: color 0.75s ease
+    }
 
 /* ----------Section---------- */
     
@@ -312,7 +295,7 @@ a:hover {
       display: block;
       border: none;
     }
-/* Mobile adjustments */    
+/* SE LO SCHERMO È MINORE DI 600px / VISUALIZZAZIONE MOBILE */    
  @media (max-width: 600px) {
   .gallery {
     flex-direction: column;
@@ -351,3 +334,17 @@ a:hover {
     height: auto;
   }
 }
+/* SE LO SCHERMO È MAGGIORE DI 600px, VISUALIZZA COLONNE */
+    @media (min-width: 600px) {
+      .grid-container {
+        grid-template-columns: 1fr 0.8fr;
+      }
+      .grid-container > section {
+        padding: 1rem 0rem 1rem 0rem;
+      }
+    #videos,
+    #slideshow,
+    #releases {
+        grid-column: 1 / -1;
+      }
+    }
