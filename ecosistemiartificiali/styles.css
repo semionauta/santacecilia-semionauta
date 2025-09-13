@@ -42,6 +42,14 @@
       display: grid;
       gap: 0rem 0rem 0rem 0rem;
     }
+    #bandcamp-small-player {
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     width: 100%;
+     margin: 1rem 0rem;
+     
+    }
     
 /* ----------Navbar---------- */
     /* Navbar hidden by default */
@@ -61,17 +69,14 @@
       z-index: 1000;
       box-shadow: none;
     }
-
     nav.visible {
       opacity: 1;
       transform: translateY(0);
     }
-
     /* Navbar background when menu is active */
     nav.menu-open {
       background: rgba(255,255,255,1);
     }
-
 /* ----------Menu Hamburger Icon---------- */
     .menu-toggle {
       width: 35px;
@@ -84,7 +89,6 @@
       background: none;
       z-index: 1100;
     }
-
     .menu-toggle span {
      display: block;
       height: 2px;
