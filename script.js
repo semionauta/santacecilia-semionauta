@@ -11,8 +11,8 @@
     rootMargin: '0px 0px -10% 0px'
   });
 
-  document.querySelectorAll('section').forEach(section => {
-    observer.observe(section);
+  document.querySelectorAll('section, .fade-block').forEach(el => {
+    observer.observe(el);
   });
 });
 

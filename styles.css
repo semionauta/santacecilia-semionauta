@@ -1,6 +1,6 @@
-    {
-      box-sizing: border-box;
-    }
+* {
+  box-sizing: border-box;
+}
 /* ----------Font---------- */  
     @font-face {
      font-family: 'Grotesk';
@@ -99,9 +99,9 @@
     }
 
 /* Initial positions */
-   .menu-toggle span:nth-child(1) { top: 10px; }
-   .menu-toggle span:nth-child(2) { center: 10px; }
-   .menu-toggle span:nth-child(3) { bottom: 10px; }
+   .menu-toggle span:nth-child(1) { }
+   .menu-toggle span:nth-child(2) { }
+   .menu-toggle span:nth-child(3) { }
 
  /* Hamburger animation for perfect X */
    .menu-toggle.active span:nth-child(1) {
@@ -136,7 +136,6 @@
       top: 65px;
       left: 0;
       width: 100%;
-      max-width: 95vw;      /* never wider than viewport */
       /* overflow-x: hidden;  stop horizontal scroll */
       pointer-events: none; /* prevent clicks when hidden */
     }
@@ -187,6 +186,15 @@
       opacity: 1;
       transform: translateY(0);
     }
+    .fade-block {
+      opacity: 0;
+      transform: translateY(50px);
+      transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    }
+    .fade-block.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
     h2 {
       font-weight: 400;
       font-size: 2rem;
@@ -233,9 +241,10 @@
       width: 100%;
     }
     .video-gallery iframe {
-      width: 100%; /* Make videos responsive */
-      max-width: 300px;
-      height: 170px;
+      flex: 0 0 auto; /* Prevent shrinking below intended width */
+      width: 85vw;    /* Takes up most of the screen so it's a prominent carousel */
+      max-width: 720px; /* Much larger desk resize limit */
+      aspect-ratio: 16 / 9; /* Ensures perfect video proportions at any width */
       border: none;
     }
 .slideshow {
@@ -254,7 +263,7 @@
 .slideshow img {
   width: 100%;
 /*  max-height: 75%;     4:3 */
-  max-height: 56.25%; 16:9 
+  max-height: 56.25%; /* 16:9 */
 /*  max-height:	177.77%; 9:16 */
   object-fit: cover;
   flex: 0 0 auto;
@@ -287,10 +296,10 @@ a:hover {
     }
 
     .gallery a {
-      flex: 1 1 300px;
-      max-width: 300px;
+      flex: 0 0 auto;
+      width: 85vw;
+      max-width: 720px;
       text-decoration: none;
-      width: 100%;
     }
 
     .gallery img {
@@ -352,3 +361,48 @@ a:hover {
         grid-column: 1 / -1;
       }
     }
+/* Placeholder Project Pages Styles */
+.placeholder-page {
+  border-bottom: none;
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4rem 0rem;
+}
+.placeholder-title {
+  font-size: 5rem;
+  font-weight: 400;
+  line-height: 1;
+  text-align: left;
+  margin-top: 0rem;
+  margin-bottom: 2rem;
+  padding: 0 1rem;
+}
+.placeholder-desc {
+  font-size: 2rem;
+  font-weight: bold;
+  line-height: 1.4;
+  padding: 0 2rem;
+  margin-bottom: 1.5rem;
+}
+@media (max-width: 600px) {
+  .placeholder-title { font-size: 3rem; }
+  .placeholder-desc { font-size: 1.5rem; }
+  
+  /* Slower, more deliberate fade-in for mobile */
+  section {
+    transform: translateY(80px);
+    transition: opacity 1.2s ease-out, transform 1.2s ease-out;
+  }
+  .fade-block {
+    transform: translateY(80px);
+    transition: opacity 1.2s ease-out, transform 1.2s ease-out;
+  }
+  section.visible {
+    transform: translateY(0);
+  }
+  .fade-block.visible {
+    transform: translateY(0);
+  }
+}
