@@ -3529,7 +3529,8 @@ Pentatonica giusta
    direttamente nel browser, lo si fornisce qui sopra la memoria del browser: l'app non cambia. */
 (function () {
   if (window.storage && typeof window.storage.get === 'function' && typeof window.storage.set === 'function') return;
-  let ok = false; try { localStorage.setItem('mc:prova', '1'); localStorage.removeItem('mc:prova'); ok = true; } catch (err) { /* memoria non disponibile */ }
+  // basta poter leggere: con la memoria piena una scrittura di prova fallisce, ma le sessioni già salvate devono restare leggibili (e set() lo dirà da sé)
+  let ok = false; try { void localStorage.length; ok = true; } catch (err) { /* memoria non disponibile */ }
   if (!ok) return;
   window.storage = {
     async get(key) { const v = localStorage.getItem('mc:' + key); if (v === null) throw new Error('chiave assente'); return { key, value: v }; },
@@ -5416,6 +5417,7 @@ function limLoad(c) {
 const limChains = () => [clipNodes, tail && tail.post && tail.post._clip].filter((x, i, a) => x && a.indexOf(x) === i);
 function limNode(nodes) {
   const N = nodes.N, n = new AudioWorkletNode(ac, 'limitatore', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [N], channelCount: N, channelCountMode: 'explicit', channelInterpretation: 'discrete', processorOptions: { channels: N, params: limParams() } });
+  wkOnError(n, () => wkFault('lim', n, 'Il limitatore si è fermato', 'resta la protezione dal clip (come Leggero).', () => limChains().forEach(c => { if (c.wk && ac) { const t = ac.currentTime; c.wkG.gain.setTargetAtTime(0, t, 0.005); c.fb.gain.setTargetAtTime(1, t, 0.005); } })));
   n.port.onmessage = e => { const d = e.data; if (!d || d.type !== 'meter') return; if (nodes !== limChains()[0]) return; Object.assign(LIM.meter, d, { t: performance.now() }); if (typeof limDraw === 'function') limDraw(); };
   return n;
 }
@@ -5431,7 +5433,7 @@ function clipBuild(N) {
   if (LIM.ctx === ac) limAttach(nodes, true); else limLoad(ac);
 }
 function limAttach(nodes, now) {                                                 // il processore entra al posto del ripiego, con la stessa latenza
-  if (nodes.wk || nodes.dead) return;
+  if (nodes.wk || nodes.dead || wkFaulty('lim')) return;
   const wk = limNode(nodes), wkG = ac.createGain(); wkG.channelCount = nodes.N; wkG.channelCountMode = 'explicit'; wkG.channelInterpretation = 'discrete';
   nodes.post.connect(wk); wk.connect(wkG); wkG.connect(nodes.out); nodes.wk = wk; nodes.wkG = wkG; nodes.push(wk, wkG);
   const t = ac.currentTime;
@@ -5576,6 +5578,7 @@ function pulLoad(c) {
 function pulNode(n) {
   const N = n.N, w = new AudioWorkletNode(ac, 'pultec-eqp1a', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [N], channelCount: N, channelCountMode: 'explicit', channelInterpretation: 'discrete',
     parameterData: pulParams(), processorOptions: { sleep: !pulOn() } });
+  wkOnError(w, () => wkFault('pul', w, 'Il Pultec si è fermato', 'il mix passa senza equalizzazione, con lo stesso ritardo.', () => PUL.chains.forEach(c => { if (c.wk && ac) { const t = ac.currentTime; c.wkG.gain.setTargetAtTime(0, t, 0.005); c.fb.gain.setTargetAtTime(1, t, 0.005); } })));
   w.port.onmessage = e => { const d = e.data; if (d && d.type === 'ready' && d.latencySamples !== PUL_LAT) console.warn('Latenza del Pultec diversa da quella dichiarata:', d.latencySamples); };
   return w;
 }
@@ -5591,7 +5594,7 @@ function pulBuild(N) {                                                         /
   return n;
 }
 function pulAttach(n, now) {                                                   // il processore entra al posto del ritardo, con la stessa latenza
-  if (n.wk || n.dead || n.ctx !== ac) return;
+  if (n.wk || n.dead || n.ctx !== ac || wkFaulty('pul')) return;
   n.on = pulOn(); const wk = pulNode(n), wkG = ac.createGain(); wkG.channelCount = n.N; wkG.channelCountMode = 'explicit'; wkG.channelInterpretation = 'discrete';
   n.src.connect(wk); wk.connect(wkG); wkG.connect(n.out); n.wk = wk; n.wkG = wkG; n.nodes.push(wk, wkG);
   const t = ac.currentTime;
@@ -5683,12 +5686,13 @@ function vulBuild(N, nV, inp, wet, pad) {                                       
   return n;
 }
 function vulAttach(n) {
-  if (n.wk || n.dead || n.ctx !== ac) return;
+  if (n.wk || n.dead || n.ctx !== ac || wkFaulty('vulture')) return;
   const mode = vulMode(), t = vulTables(mode), grid = [null, null, null]; VUL.grid.forEach((g, m) => { if (g) grid[m] = g; });
   n.sleep = vulSleeps();
   n.wk = new AudioWorkletNode(ac, 'culture-vulture-q', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [n.N], channelCount: n.N, channelCountMode: 'explicit', channelInterpretation: 'discrete',
     parameterData: vulParams(n.nV), processorOptions: { sleep: n.sleep, tables: { type: 'tables', tIn: t.tIn, tOut: t.tOut, grid } } });
   n.wk.port.onmessage = e => { const d = e.data; if (d && d.type === 'ready' && d.latencySamples !== VUL_LAT) console.warn('Latenza del Culture Vulture diversa da quella dichiarata:', d.latencySamples); };
+  wkOnError(n.wk, () => wkFault('vulture', null, 'Il Culture Vulture si è fermato', 'la saturazione passa al Triodo.', satAlgoApply));
   n.vIn.connect(n.wk); n.wk.connect(n.dl);
   vulPrepare(); satAlgoApply();
 }
@@ -5697,7 +5701,7 @@ function vulKill(n) {
   if (n.wk) { try { n.wk.port.postMessage({ type: 'shutdown' }); n.wk.port.close(); n.wk.disconnect(); } catch (err) { /* ok */ } }
   [n.vIn, n.dl, n.vG].forEach(x => { try { x.disconnect(); } catch (err) { /* ok */ } });
 }
-const vulLive = n => !!(n && n.wk && !n.dead && n.ctx === ac && vulOn());       // la via del Vulture suona solo se il processore c'è
+const vulLive = n => !!(n && n.wk && !n.dead && n.ctx === ac && vulOn() && !wkFaulty('vulture'));       // la via del Vulture suona solo se il processore c'è
 function vulApply() {                                                            // controlli dal vivo, anche per la coda dopo lo stop
   if (!ac) return; const t = ac.currentTime;
   VUL.chains.forEach(n => {
@@ -5866,6 +5870,22 @@ function tapeDriftBuffer() {                                                    
 // Le pagine file:// hanno origine opaca: Chrome rifiuta i blob:null nei worklet,
 // ma accetta i moduli data: incorporati. Memorizza il primo schema riuscito per evitare tentativi rumorosi a ogni modulo.
 let workletSourceMode = location.protocol === 'file:' ? 'data' : 'blob';
+/* Processori fermati da un errore dopo l'avvio («processorerror»): un AudioWorklet guasto esce muto e il resto dell'app non se ne accorgerebbe.
+   Ogni modulo ascolta l'evento dei suoi nodi: qui si ricorda il guasto (per tipo, fino a un nuovo contesto audio), si avvisa una volta nella pillola
+   degli avvisi e il modulo passa al suo ripiego con una dissolvenza: filtri a 12 dB, eco «Nastro», protezione dal clip, ritardo al posto del Pultec, Triodo. */
+const WK_FAULT = new Map();
+// Chrome consegna l'errore vero solo a «onprocessorerror», non agli ascoltatori di addEventListener (provato: 1 contro 0); qui entrambi, una volta sola
+function wkOnError(node, fn) { let done = false; const h = e => { if (done) return; done = true; fn(e); }; node.onprocessorerror = h; node.addEventListener('processorerror', h); return h; }
+const wkFaulty = kind => { const f = WK_FAULT.get(kind); return !!(f && f.ctx === ac); };
+function wkFault(kind, node, label, after, fallback) {
+  const known = wkFaulty(kind); WK_FAULT.set(kind, { ctx: ac, at: Date.now(), count: (known ? WK_FAULT.get(kind).count : 0) + 1 });
+  try { if (node) node.disconnect(); } catch (err) { /* ok */ }
+  if (!known) {
+    console.warn('Processore audio fermato da un errore:', kind);
+    if (typeof warn === 'function') warn('wk-' + kind, { err: true, text: label + ' per un errore: ' + after + ' Ricarica la pagina per riprovare.' });
+  }
+  try { fallback(); } catch (err) { console.warn('ripiego non riuscito:', kind, err); }
+}
 async function loadWorkletModule(c, source, localUrl) {
   if (!c || !c.audioWorklet || typeof AudioWorkletNode !== 'function') return false;
   const data = () => 'data:application/javascript;charset=utf-8,' + encodeURIComponent(source);
@@ -5952,7 +5972,10 @@ function ecoUnit(m, channel) {
       ecoClipReceive(m, channel, n, d);
     }
   };
-  n.addEventListener('processorerror', () => { if (!n._ecoReadyDone) { n._ecoReadyDone = true; ready(false); } });
+  wkOnError(n, () => {
+    if (!n._ecoReadyDone) { n._ecoReadyDone = true; ready(false); return; }    // prima del primo blocco: la preparazione fallisce e resta la macchina di prima
+    wkFault(ECO_KIND[m], n, m === 're201' ? 'L\'eco RE-201 si è fermata' : 'L\'eco EP-3 si è fermata', 'da qui suona l\'eco «Nastro».', () => { if (tape) tapeUnitApply(); });
+  });
   return n;
 }
 function ecoBuild(tp, m) {                                                       // una macchina per canale; uscita (uG) e differenza dal diretto per la traccia «eco» (rG)
@@ -6082,6 +6105,7 @@ function scheduleNativeTail(tp, end) {
 function tapeUnitApply() {                                                       // prepara, poi sostituisce la macchina senza interrompere la coda
   const tp = tape; if (!tp || !ac || !(playing || (tail && tail.tape === tp))) return;   // mai su un'eco già fermata
   let want = tapeModelV();
+  if (want !== 'nastro' && wkFaulty(ECO_KIND[want])) want = 'nastro';         // la macchina si è fermata per un errore: il ripiego nativo
   if (want !== 'nastro' && !ecoReady(want)) {
     const loading = ECO.loading[ECO_KIND[want]];
     if (!(loading && loading.c === ac && ECO.fail[ECO_KIND[want]])) { ecoLoad(ECO_KIND[want]); return; }
@@ -6098,7 +6122,8 @@ function tapeUnitApply() {                                                      
     Promise.race([unit.ready, expire]).then(ok => {
       if (tp.pending !== pending || tape !== tp || !(playing || (tail && tail.tape === tp)) || tapeModelV() !== want) { if (tp.pending === pending) tp.pending = null; clearTimeout(pending.timer); ecoKill(unit); return; }
       tp.pending = null; clearTimeout(pending.timer);
-      if (!ok) { ecoKill(unit); console.error('La nuova macchina eco non ha prodotto un blocco valido:', want); return; }
+      if (!ok) { ecoKill(unit); console.error('La nuova macchina eco non ha prodotto un blocco valido:', want); if (typeof warn === 'function') warn('eco-ready', { text: 'La macchina d\'eco ' + (want === 're201' ? 'RE-201' : 'EP-3') + ' non è partita: resta l\'eco di prima.' }); return; }
+      if (typeof unwarn === 'function') unwarn('eco-ready');
       tapeUnitCommit(tp, unit, wantKey);
     });
     return;
@@ -6551,7 +6576,7 @@ const MOOG = { ctx: null, loading: null, fail: false, vin: [], ch: [], sched: []
 const MOOG_C4 = 261.6256, MOOG_P = Math.sqrt(Math.pow(2, 0.25) - 1);
 const moogAlgo = t => Par.get(t + 'Algo') === 'moog';
 const moogWant = t => moogAlgo(t) && Par.get(t + 'On');
-const moogOn = t => moogWant(t) && !!ac && MOOG.ctx === ac;                 // pronto su questo contesto: il biquad per nota di quel filtro resta aperto
+const moogOn = t => moogWant(t) && !!ac && MOOG.ctx === ac && !wkFaulty('moog');                 // pronto su questo contesto: il biquad per nota di quel filtro resta aperto
 const moogRes = t => Math.max(0, Math.min(1.2, Par.n(t + 'Res') || 0));
 const moogOsN = () => Par.get('moogOs') === '4' ? 4 : 2;
 const moogComp = t => t === 'lp' && Par.get('moogComp') ? 20 * Math.log10(1 + 4 * moogRes(t)) : 0;   // guadagno in continua del ladder: 1/(1+k), k = 4r
@@ -6579,6 +6604,7 @@ function moogNode(t) {
   const n = new AudioWorkletNode(ac, pair ? 'moog-ladder-cascade' : 'moog-ladder-dual', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1], channelCount: 1, channelCountMode: 'explicit', channelInterpretation: 'speakers',
     processorOptions: { oversample: moogOsN(), channels: 1, mode: t, openTop: true, meter: false } });
   n.port.onmessage = () => {};                                                 // il messaggio «ready» non serve: la porta aperta non accumula nulla
+  wkOnError(n, () => wkFault('moog', n, 'Il filtro Moog si è fermato', 'da qui suonano i filtri a 12 dB, con le stesse impostazioni.', () => { if (ac) applyFilters(); }));
   n._stages = (pair ? ['hp', 'lp'] : [t]).map(type => {
     const get = name => n.parameters.get(pair ? type + name[0].toUpperCase() + name.slice(1) : name);
     const m = { type, cutoff: get('cutoffHz'), resonance: get('resonance'), drive: get('driveDb'), output: get('outputDb') };
@@ -7526,13 +7552,30 @@ $('btnCsv').onclick = async () => {
 };
 let midiAcc = null, midiChoice = null, midiOutOn = false;
 const midiPref = /loopmidi|iac|bus ?\d|virtual|ableton|rtpmidi|midi through/i, midiBad = /microsoft gs wavetable/i;
+function midiSwitchOut(next) {                                               // cambio di porta (a mano, porta tolta o ricollegata): la vecchia si spegne, la nuova riparte dallo stato di adesso
+  const old = midiOut; if (old === next || (old && next && old.id === next.id)) { midiOut = next; return; }
+  const now = performance.now(), pend = midiPortQ.filter(m => m.at > now);
+  if (old) {
+    try { if (typeof old.clear === 'function') old.clear(); } catch (err) { /* ok */ }
+    const last = pend.reduce((a, m) => Math.max(a, m.at), now), off = at => { for (let c = 0; c < 16; c++) { old.send([0xB0 | c, 123, 0], at); old.send([0xB0 | c, 120, 0], at); old.send([0xE0 | c, 0, 64], at); } };
+    try { off(); if (last > now) off(last + 1); } catch (err) { /* porta già scollegata */ }   // subito, e dopo l'ultimo evento già consegnato se la porta non sa svuotare la coda
+  }
+  midiPortQ = []; midiOut = next;
+  if (!next || !playing || !st.piece) return;
+  if (st.cfg.mpe) mpeSetup(st.cfg); else for (let v = 0; v < st.piece.nV; v++) midiSetup(chOf(v), st.cfg);   // raggio del bend come all'avvio
+  pend.sort((a, b) => a.at - b.at || a.seq - b.seq).forEach(m => midiSend(m.bytes, m.at, m.rec));   // gli eventi già in coda per la vecchia porta
+  liveNotes.forEach(r => {                                                      // le note che suonano adesso: bend e nota-on sulla porta nuova; il loro nota-off è fra gli eventi qui sopra o ancora nella coda dell'app
+    if (r.dead || !r.midiOn || !(r.onAt <= now)) return;
+    const nn = foldMidi(r.midi), bv = bendValue(r.dev, st.cfg.bendRange); midiSend([0xE0 | recCh(r), bv & 127, bv >> 7]); midiSend([0x90 | recCh(r), nn, 80]);
+  });
+}
 function fillMidiPorts() {
   const outs = [...midiAcc.outputs.values()];
   Par.opts('midiOut', [{ value: '', label: 'Nessuna (solo sinusoidi)' }].concat(outs.map(o => ({ value: o.id, label: o.name }))));
   let id = '';
   if (midiChoice !== null && (midiChoice === '' || outs.some(o => o.id === midiChoice))) id = midiChoice;      // rispetta la scelta fatta a mano
   else { const auto = outs.find(o => midiPref.test(o.name) && !midiBad.test(o.name)) || outs.find(o => !midiBad.test(o.name)) || outs[0]; id = auto ? auto.id : ''; }
-  Par.set('midiOut', id); midiOut = id ? midiAcc.outputs.get(id) : null; $('midiOut').hidden = false;
+  Par.set('midiOut', id); midiSwitchOut(id ? midiAcc.outputs.get(id) || null : null); $('midiOut').hidden = false;
   synthGateApply();                                                        // senza una porta disponibile il synth torna udibile, anche sulle note tenute
   $('btnMidiOut').textContent = 'Aggiorna le porte';
   $('midiState').textContent = midiOut
@@ -8115,6 +8158,7 @@ function restoreSession(s, opts) {
 }
 
 const hasSessStore = () => !!(window.storage && typeof window.storage.get === 'function' && typeof window.storage.set === 'function');
+const persistNote = (ok, msg) => !hasSessStore() || ok ? '' : msg;     // i messaggi dicono il vero: se la registrazione non è riuscita, lo aggiungono
 async function sessPersist() { if (!hasSessStore()) return false; try { return !!(await window.storage.set(SESS_KEY, JSON.stringify(sessions), false)); } catch (err) { return false; } }
 function renderSessions() {
   const box = $('sessList'); box.textContent = '';
@@ -8129,7 +8173,7 @@ function renderSessions() {
     const del = document.createElement('button'); del.textContent = 'Elimina';
     del.className = 'cfm'; del.onclick = async () => {
       if (!(await confirmPop(row, `Eliminare «${it.name}»? Non si può annullare.`, 'Elimina', del))) return;
-      sessions = sessions.filter(x => x.id !== it.id); renderSessions(); await sessPersist(); say('Sessione eliminata.');
+      sessions = sessions.filter(x => x.id !== it.id); renderSessions(); say('Sessione eliminata.' + persistNote(await sessPersist(), ' Non sono riuscito a registrare la modifica: al prossimo avvio la ritrovi.'));
     };
     row.append(info, load, upd, del); box.appendChild(row);
   });
@@ -8180,8 +8224,8 @@ $('sessImport').onchange = async e => {
         if (await confirmPop($('sessImpBox'), `Nell'elenco c'è già «${name}». Sostituirla con quella del file? Se annulli, la aggiungo come «${alt}».`, 'Sostituisci')) how = 'sostituita nell\'elenco';
         else { name = alt; how = 'aggiunta all\'elenco accanto all\'altra'; }
       } else if (old) how = 'già nell\'elenco, uguale';
-      $('sessName').value = name; if (!old || how !== 'già nell\'elenco, uguale') sessUpsert(name, d.session, d.method || Par.get('method'), d.savedAt); renderSessions(); await sessPersist();
-      say(`Sessione «${name}» aperta e ${how}.`);
+      $('sessName').value = name; if (!old || how !== 'già nell\'elenco, uguale') sessUpsert(name, d.session, d.method || Par.get('method'), d.savedAt); renderSessions(); const ok = await sessPersist();
+      say(`Sessione «${name}» aperta e ${how}.` + persistNote(ok, ' Non sono riuscito a registrare l\'elenco in modo permanente: scaricala se vuoi conservarla.'));
     } else if (Array.isArray(d.sessions)) {                                // tante sessioni: le unisco all'elenco
       let n = 0, same = 0, renamed = 0;
       d.sessions.forEach(s => {
@@ -8191,10 +8235,10 @@ $('sessImport').onchange = async e => {
         const use = old ? sessUnique(nm) : nm; if (old) renamed++;
         sessUpsert(use, s.data, s.method, s.savedAt); n++;
       });
-      renderSessions(); await sessPersist();
+      renderSessions(); const okP = await sessPersist();
       const nS = k => k === 1 ? '1 sessione' : k + ' sessioni';
       say(!n && !same ? 'Nel file non ho trovato sessioni valide.' : !n ? `Nessuna sessione nuova: ${same === 1 ? 'quella del file era già' : 'le ' + same + ' del file erano già'} nell'elenco, uguali.` :
-        `${n === 1 ? 'Importata' : 'Importate'} ${nS(n)}` + (renamed ? ` (${renamed === 1 ? 'una aveva' : renamed + ' avevano'} un nome già usato: ${renamed === 1 ? 'aggiunta' : 'aggiunte'} con «(2)», «(3)»…, senza toccare quelle che avevi)` : '') + (same ? `; ${nS(same)} ${same === 1 ? 'era' : 'erano'} già nell'elenco, uguali` : '') + '.');
+        `${n === 1 ? 'Importata' : 'Importate'} ${nS(n)}` + (renamed ? ` (${renamed === 1 ? 'una aveva' : renamed + ' avevano'} un nome già usato: ${renamed === 1 ? 'aggiunta' : 'aggiunte'} con «(2)», «(3)»…, senza toccare quelle che avevi)` : '') + (same ? `; ${nS(same)} ${same === 1 ? 'era' : 'erano'} già nell'elenco, uguali` : '') + '.' + (n ? persistNote(okP, ' Non sono riuscito a registrare l\'elenco in modo permanente: al prossimo avvio non le ritrovi.') : ''));
     } else say('Questo file non è una sessione di questa app.');
   } catch (err) { say('Non riesco a leggere questo file: non è un .json valido.'); }
 };
@@ -8227,18 +8271,34 @@ const autoTouch = e => {
 };
 document.addEventListener('input', autoTouch, true); document.addEventListener('change', autoTouch, true);
 Par.onAny((id, v, o) => { if (SESS_SKIP.has(id)) return; if (o.trusted && autoPending && !$('sessBanner').hidden) keepFoundState(); scheduleAutosave(); }, true);   // un gesto su un controllo di Quadro conta come lavoro, come un evento vero
-setInterval(() => { autoCheckPending(); if (autoArmed && !autoTimer) autoWrite(); }, 4000);
+setInterval(() => { autoCheckPending(); autoHeldRetry(); if (autoArmed && !autoTimer) autoWrite(); }, 4000);
 const autoFlush = () => { autoCheckPending(); autoWrite(); };            // uscendo dalla pagina: prima il banner, poi la scrittura
 window.addEventListener('pagehide', autoFlush); document.addEventListener('visibilitychange', () => { if (document.hidden) autoFlush(); });
 /* Lo stato ritrovato all'apertura non va perso se si comincia a lavorare senza scegliere: finisce tra le sessioni, e il salvataggio automatico riparte col lavoro nuovo. */
+/* Il salvataggio automatico riparte solo quando lo stato ritrovato è davvero al sicuro: se la scrittura delle sessioni non riesce (memoria piena),
+   l'ultimo stato salvato da solo resta quello ritrovato, l'avviso offre di scaricarlo come file, e ogni 4 secondi si riprova a salvarlo. */
+let autoHeld = null;
 async function keepFoundState() {
   const p = autoPending; if (!p) return; autoPending = null; $('sessBanner').hidden = true;
   const name = sessUnique('Ultimo stato ritrovato · ' + fmtDate(p.savedAt));
-  const add = !sessions.some(x => sessSame(x.data, p.data)); let wrote = null;
-  if (add) { sessUpsert(name, p.data, p.method, p.savedAt); renderSessions(); wrote = sessPersist(); }   // prima lo stato ritrovato tra le sessioni…
-  armAutosave(); scheduleAutosave();                                     // …poi il salvataggio automatico riparte col lavoro nuovo
-  if (add) { await wrote; say(`Lo stato ritrovato all'apertura è tra le sessioni come «${name}»: da qui in poi salvo il lavoro nuovo.`); }
+  const add = !sessions.some(x => sessSame(x.data, p.data));
+  if (add) { sessUpsert(name, p.data, p.method, p.savedAt); renderSessions(); }   // prima lo stato ritrovato tra le sessioni…
+  if (!add || await sessPersist()) {                                     // …e solo dopo che è registrato il salvataggio automatico riparte col lavoro nuovo
+    armAutosave(); scheduleAutosave();
+    if (add) say(`Lo stato ritrovato all'apertura è tra le sessioni come «${name}»: da qui in poi salvo il lavoro nuovo.`);
+    return;
+  }
+  autoHeld = { name, p };
+  warn('autoHeld', { err: true, text: `Non riesco a registrare lo stato ritrovato («${name}»), forse la memoria è piena: finché non è al sicuro non lo sostituisco con il lavoro nuovo. Scaricalo come file, o libera spazio eliminando qualche sessione.`, act: 'Scarica', fn: autoHeldDownload });
+  say(`Lo stato ritrovato è nell'elenco come «${name}», ma non sono riuscito a registrarlo: il lavoro nuovo non lo sostituisce finché non lo scarichi o non c'è spazio.`);
 }
+function autoHeldRelease(msg) { autoHeld = null; unwarn('autoHeld'); armAutosave(); scheduleAutosave(); if (msg) say(msg); }
+function autoHeldDownload() {                                            // scaricato come file è al sicuro: il salvataggio automatico può ripartire
+  const h = autoHeld; if (!h) return;
+  download(sessFileName(h.name), JSON.stringify({ app: 'matrice-e-canone', kind: 'session', version: SESS_VERSION, name: h.name, savedAt: h.p.savedAt, method: h.p.method, session: h.p.data }, null, 1), 'application/json');
+  autoHeldRelease(`«${h.name}» scaricato: da qui in poi salvo il lavoro nuovo.`);
+}
+async function autoHeldRetry() { if (autoHeld && hasSessStore() && await sessPersist()) autoHeldRelease(`«${autoHeld.name}» ora è registrato tra le sessioni: da qui in poi salvo il lavoro nuovo.`); }
 let autoBase = null;                                                      // lo stato di quando il banner è comparso
 const autoNow = () => { try { return autoKeyOf(captureSession()); } catch (err) { return null; } };
 function autoCheckPending() {                                             // il lavoro è cambiato senza una risposta al banner: tengo lo stato ritrovato tra le sessioni e salvo il nuovo
@@ -9562,7 +9622,7 @@ window.addEventListener('load', () => { (async () => {
 
 
 /* Versione, in fondo alla colonna delle impostazioni: numero e data da src/versione.json, build dall'impronta dei sorgenti (costruisci.py) */
-const APP_VER = {"versione": "1.0", "data": "29 ottobre 2026", "build": "0677467"};
+const APP_VER = {"versione": "1.0", "data": "29 ottobre 2026", "build": "19996aa"};
 { const v = $('appVer'); if (v) {
   ['Matrice e canone ' + APP_VER.versione, APP_VER.data, 'build ' + APP_VER.build].forEach((t, i) => { if (i) v.append(document.createElement('br')); const l = document.createElement('span'); l.textContent = t; v.append(l); }); v.title = 'Versione dell\'app: numero, data e build (cambia con i sorgenti)'; } }
 
@@ -9693,7 +9753,8 @@ function recBudget() {
 }
 function recOverBudget(r) {
   if (rec !== r || r.stopping) return;
-  r.overBudget = true; recIssue(r, 'Registrazione chiusa al limite di memoria (' + Math.round(r.budget / 1048576) + ' MB): i file contengono tutto fino a qui.');
+  const msg = 'Registrazione chiusa al limite di memoria (' + Math.round(r.budget / 1048576) + ' MB): i file contengono tutto fino a qui.';
+  r.overBudget = true; r.issue = r.issue ? r.issue + ' ' + msg : msg; recUI();   // si dice sempre, anche dopo un altro avviso
   recArmed = false; recStop('Limite di memoria raggiunto: preparo la registrazione.');
 }
 function recStream(name, ch, useWorklet, delaySec) {                                  // un ingresso del registratore: un nodo di guadagno e il nodo che raccoglie i campioni
@@ -9896,11 +9957,11 @@ function recCapture(r, wk) {
     const finish = () => { groups.forEach(g => { g.ended = true; }); streams.forEach(({ stream }) => { stream.ended = true; }); };
     node.port.onmessage = e => { if (e.data.end) { recCaptureEnd(r, state, streams, e.data); finish(); } else recCaptureTake(r, state, streams, e.data); };
     const error = () => { finish(); recFailure(r, 'Il registratore audio si è fermato. I dati acquisiti sono disponibili.'); };
-    node.addEventListener('processorerror', error);
+    node.onprocessorerror = error; node.addEventListener('processorerror', error);   // Chrome consegna l'errore vero solo alla proprietà
     node.port.onmessageerror = () => recFailure(r, 'Non riesco a ricevere i campioni. I dati acquisiti sono disponibili.');
     let stopping = false, disposed = false;
     const stop = () => { if (!stopping) { stopping = true; node.port.postMessage('stop'); } };
-    const dispose = () => { if (disposed) return; disposed = true; stop(); node.removeEventListener('processorerror', error); node.port.onmessage = null; node.port.onmessageerror = null; node.port.close(); };
+    const dispose = () => { if (disposed) return; disposed = true; stop(); node.removeEventListener('processorerror', error); node.onprocessorerror = null; node.port.onmessage = null; node.port.onmessageerror = null; node.port.close(); };
     groups.forEach(group => { group.stop = stop; group.dispose = dispose; });
     streams.forEach(({ stream }) => { stream.node = node; stream.stop = stop; });
     groups.forEach((group, i) => group.merger.connect(node, 0, i)); node.connect(c.destination);
@@ -10083,7 +10144,7 @@ function recDetach(r) {
   r.links.forEach(([source, target]) => { try { source.disconnect(target); } catch (err) { /* già scollegato */ } }); r.links = [];
   r.streams.forEach(x => {
     try { if (x.stop) x.stop(); } catch (err) { /* processore già fermo */ }
-    x.nodes.forEach(n => { try { n.disconnect(); if (n.port) { n.removeEventListener('processorerror', x.errorListener); n.port.onmessage = null; n.port.onmessageerror = null; n.port.close(); } } catch (err) { /* ok */ } });
+    x.nodes.forEach(n => { try { n.disconnect(); if (n.port) { n.removeEventListener('processorerror', x.errorListener); n.onprocessorerror = null; n.port.onmessage = null; n.port.onmessageerror = null; n.port.close(); } } catch (err) { /* ok */ } });
   });
 }
 function recStop(msg) {
@@ -10673,7 +10734,8 @@ function vcBuild() {                                                           /
   n.chA = g(1); n.chB = g(0); n.mono = g(1); n.mono.channelCount = 1; n.mono.channelCountMode = 'explicit';
   n.split.connect(n.chA, 0); n.split.connect(n.chB, 1); n.chA.connect(n.mono); n.chB.connect(n.mono);
   n.inG = g(1); n.mono.connect(n.inG);
-  if (VIN.wk) { n.gate = own(new AudioWorkletNode(c, 'voce-gate', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1], channelCount: 1, channelCountMode: 'explicit' })); n.gate.port.onmessage = e => { if (VIN.n === n) VIN.gateOpen = e.data.open !== false; }; }
+  if (VIN.wk) { n.gate = own(new AudioWorkletNode(c, 'voce-gate', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1], channelCount: 1, channelCountMode: 'explicit' })); n.gate.port.onmessage = e => { if (VIN.n === n) VIN.gateOpen = e.data.open !== false; };
+    const gate = n.gate; wkOnError(gate, () => wkFault('gate', gate, 'Il gate dell\'ingresso si è fermato', 'la voce passa senza gate.', () => { if (n.gate !== gate) return; try { n.inG.connect(n.hp); } catch (err) { /* ok */ } VIN.gateOpen = true; })); }
   else n.gate = g(1);                                                        // senza processori: niente gate
   VIN.gateOpen = true; n.inG.connect(n.gate); n.an = own(c.createAnalyser()); n.an.fftSize = 4096; n.an.smoothingTimeConstant = 0.6; n.inG.connect(n.an); n.buf = new Float32Array(2048); n.fq = new Float32Array(2048);
   n.hp = bq('highpass', 20, dbQ(Math.SQRT1_2)); n.low = bq('lowshelf', 200); n.mid = bq('peaking', 1000, 2); n.high = bq('highshelf', 7000);
@@ -10690,6 +10752,7 @@ function vcBuild() {                                                           /
   if (VIN.wk) {
     n.wk = own(new AudioWorkletNode(c, 'voce-proc', { numberOfInputs: 1, numberOfOutputs: 2, outputChannelCount: [1, 1], channelCount: 1, channelCountMode: 'explicit' }));
     n.wk.port.onmessage = e => { if (VIN.n === n) VIN.f0 = e.data.f0 || 0; };
+    const proc = n.wk; wkOnError(proc, () => wkFault('voce', proc, 'I raddoppi della voce si sono fermati', 'la voce pulita continua, senza raddoppi.', () => { if (n.wk === proc) n.L.forEach(x => { try { x.g.gain.value = 0; } catch (err) { /* ok */ } }); }));
     n.make.connect(n.wk);
     for (let i = 0; i < 2; i++) { const lg = g(0), lp = pan(), dl = own(c.createDelay(0.25)); n.wk.connect(dl, i); dl.connect(lg); lg.connect(lp); lp.connect(n.mix); n.L.push({ g: lg, p: lp, d: dl }); }   // ritardo del raddoppio (doubler)
   }
