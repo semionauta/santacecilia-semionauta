@@ -7608,7 +7608,7 @@ function testBend(R, withRpn) {
 
 /* ---------- Libreria di accordature ---------- */
 const LIB_KEY = 'tunings-library';
-let lib = [];
+let lib = [], libRev = 0;                                                     // libRev: ogni cambio della libreria; un «Annulla» vale solo se nel frattempo non è cambiato niente
 const hasStore = () => !!(window.storage && typeof window.storage.get === 'function' && typeof window.storage.set === 'function');
 const libNote = m => { $('libNote').textContent = m; };
 async function libPersist() {
@@ -7625,7 +7625,7 @@ function libUpsert(name, text) {
   const i = lib.findIndex(x => x.name === name);
   const item = { id: i >= 0 ? lib[i].id : Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, text, savedAt: Date.now() };
   if (i >= 0) lib[i] = item; else lib.push(item);
-  return i >= 0;
+  libRev++; return i >= 0;
 }
 function renderLib() {
   const box = $('libList'); box.textContent = '';
@@ -7635,20 +7635,27 @@ function renderLib() {
     const info = document.createElement('div'), b = document.createElement('b'), s = document.createElement('small');
     b.textContent = it.name; s.textContent = p.error ? 'File non valido' : `${p.N} note · periodo ${p.period.toFixed(1)}¢`; info.append(b, s);
     const use = document.createElement('button'); use.textContent = 'Usa'; use.onclick = () => libUse(it.id);
-    const del = document.createElement('button'); del.textContent = 'Elimina';
-    del.onclick = () => {
-      if (del.dataset.arm) { libDelete(it.id); return; }
-      del.dataset.arm = '1'; del.textContent = 'Sicuro?';
-      setTimeout(() => { del.dataset.arm = ''; del.textContent = 'Elimina'; }, 3000);
-    };
+    const del = document.createElement('button'); del.textContent = 'Elimina'; del.onclick = () => libDelete(it.id);   // subito, con «Annulla» nell'avviso
     row.append(info, use, del); box.appendChild(row);
   });
 }
 function libUse(id) { const it = lib.find(x => x.id === id); if (!it) return; $('sclText').value = it.text; $('libName').value = it.name; onSclActivated(true); }
-async function libDelete(id) { lib = lib.filter(x => x.id !== id); renderLib(); const ok = await libPersist(); say(ok || !hasStore() ? 'Accordatura eliminata dalla libreria.' : 'Eliminata, ma non sono riuscito a salvare la libreria.'); }
+/* Le convenzioni dell'app: un dialogo quando serve decidere prima (un nome già usato), un avviso con «Annulla» per ciò che si può recuperare (eliminare, importare). */
+const libUndo = (text, before, done) => { const rev = libRev; qdPanel.toast(text, { action: 'Annulla', ms: 8000, onAction: async () => {
+  if (libRev !== rev) { qdPanel.toast('La libreria è cambiata nel frattempo: non la riporto indietro', { ms: 3200 }); return; }
+  lib = before; libRev++; renderLib(); await libPersist(); qdPanel.toast(done, { ms: 2200 }); } }); };
+async function libDelete(id) {
+  const it = lib.find(x => x.id === id); if (!it) return; const before = lib.slice();
+  lib = lib.filter(x => x.id !== id); libRev++; renderLib(); const ok = await libPersist();
+  if (!ok && hasStore()) { say('Eliminata, ma non sono riuscito a salvare la libreria.'); return; }
+  libUndo(`«${it.name}» eliminata dalla libreria`, before, `«${it.name}» è di nuovo nella libreria`);
+}
 async function libSave() {
   const p = parseScl($('sclText').value); if (p.error) { say('Non posso salvare: ' + p.error); return; }
   const name = $('libName').value.trim() || p.desc || 'Senza nome'; $('libName').value = name;
+  const old = lib.find(x => x.name === name);
+  if (old && old.text === $('sclText').value) { say(`«${name}» è già nella libreria, uguale.`); return; }
+  if (old && !(await confirmPop($('btnLibSave').parentNode, `Nella libreria c'è già «${name}». Sostituirla con l'accordatura del riquadro? Per tenerle entrambe, cambia il nome.`, 'Sostituisci', $('btnLibSave'), 'Nome già usato'))) return;
   const replaced = libUpsert(name, $('sclText').value); renderLib();
   const ok = await libPersist();
   say(`«${name}» ${replaced ? 'aggiornata' : 'salvata'} nella libreria.` + (hasStore() ? (ok ? '' : ' Non sono riuscito a registrarla in modo permanente.') : ' Ricorda di esportare la libreria se vuoi conservarla.'));
@@ -7663,8 +7670,11 @@ $('libImport').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   try {
     const data = JSON.parse(await f.text()), items = Array.isArray(data) ? data : data.items;
-    let n = 0; (items || []).forEach(it => { if (it && typeof it.name === 'string' && typeof it.text === 'string' && !parseScl(it.text).error) { libUpsert(it.name, it.text); n++; } });
-    renderLib(); await libPersist(); say(n ? `Importate ${n} accordature.` : 'Nel file non ho trovato accordature valide.');
+    const before = lib.slice(); let n = 0, rep = 0;
+    (items || []).forEach(it => { if (it && typeof it.name === 'string' && typeof it.text === 'string' && !parseScl(it.text).error) { const o = lib.find(x => x.name === it.name); if (o && o.text === it.text) return; if (o) rep++; libUpsert(it.name, it.text); n++; } });
+    if (!n) { say((items || []).length ? 'Le accordature del file sono già tutte nella libreria, uguali.' : 'Nel file non ho trovato accordature valide.'); return; }
+    renderLib(); await libPersist();
+    libUndo(`${n === 1 ? 'Importata 1 accordatura' : 'Importate ' + n + ' accordature'}${rep ? (rep === 1 ? ', 1 al posto di quella con lo stesso nome' : `, ${rep} al posto di quelle con lo stesso nome`) : ''}`, before, 'Libreria com\'era prima dell\'importazione');
   } catch (err) { say('Questo file non è una libreria valida (.json).'); }
 };
 
@@ -8335,7 +8345,15 @@ $('btnMapClear').onclick = () => {
 $('btnMapExport').onclick = () => { download('mappa-midi.json', JSON.stringify({ app: 'matrice-e-canone', kind: 'midi-map', v: 1, map: midiMap, takeover: Par.get('takeover') }, null, 1), 'application/json'); say('Mappa esportata.'); };
 $('mapImport').onchange = async ev => {
   const f = ev.target.files[0]; ev.target.value = ''; if (!f) return;
-  try { const d = JSON.parse(await f.text()); if (!d || typeof d.map !== 'object') throw new Error('x'); midiMap = validMap(d.map); midiMapRev++; if (typeof d.takeover === 'boolean') Par.set('takeover', d.takeover); takeoverState.clear(); rebuildIndex(); renderMidiMap(); saveMidiMap(); qdPanel.toast('Mappa importata: ' + Object.keys(midiMap).length + ' assegnazioni.', { ms: 2600 }); }
+  try { const d = JSON.parse(await f.text()); if (!d || typeof d.map !== 'object') throw new Error('x');
+    const before = { map: { ...midiMap }, learn: midiLearn, takeover: new Map(takeoverState), tk: Par.get('takeover') };   // come per «Cancella»: l'importazione si può annullare
+    midiMap = validMap(d.map); midiLearn = null; midiMapRev++; const rev = midiMapRev; if (typeof d.takeover === 'boolean') Par.set('takeover', d.takeover); takeoverState.clear(); rebuildIndex(); renderMidiMap(); saveMidiMap();
+    qdPanel.toast('Mappa importata: ' + Object.keys(midiMap).length + ' assegnazioni', { action: 'Annulla', ms: 8000, onAction: () => {
+      if (midiMapRev !== rev) return;                         // non sovrascrive modifiche fatte dopo l'importazione
+      midiMap = before.map; midiLearn = before.learn; midiMapRev++; Par.set('takeover', before.tk);
+      takeoverState.clear(); before.takeover.forEach((v, k) => takeoverState.set(k, v));
+      rebuildIndex(); renderMidiMap(); saveMidiMap(); qdPanel.toast('Mappa di prima ripristinata', { ms: 2200 });
+    } }); }
   catch (err) { say('Questo file non è una mappa MIDI valida.'); }
 };
 renderMidiMap(); loadMidiMap();
@@ -9443,7 +9461,7 @@ window.addEventListener('load', () => { (async () => {
 
 
 /* Versione, in fondo alla colonna delle impostazioni: numero e data da src/versione.json, build dall'impronta dei sorgenti (costruisci.py) */
-const APP_VER = {"versione": "1.0", "data": "29 ottobre 2026", "build": "7e067ff"};
+const APP_VER = {"versione": "1.0", "data": "29 ottobre 2026", "build": "1cad16b"};
 { const v = $('appVer'); if (v) {
   ['Matrice e canone ' + APP_VER.versione, APP_VER.data, 'build ' + APP_VER.build].forEach((t, i) => { if (i) v.append(document.createElement('br')); const l = document.createElement('span'); l.textContent = t; v.append(l); }); v.title = 'Versione dell\'app: numero, data e build (cambia con i sorgenti)'; } }
 
