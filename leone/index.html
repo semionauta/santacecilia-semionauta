@@ -2555,7 +2555,7 @@ label.filef{display:block}
       gesture = { el, id: s.id, end };
       try { el.setPointerCapture(e.pointerId); } catch (err) { cancelGesture(); return; }
       // col mouse la pressione lunga non apre il foglio: c'è il tasto destro
-      if (!s.mouse) s.timer = setTimeout(() => { if (s && !s.drag && !(tc && tc.st === 'pagina')) { s.long = true; el._longEnd = true; buzz(12); if (gesture && gesture.el === el) gesture = null; openSheet(el, null, true); }   // il gesto resta di questo controllo fino al sollevamento: openSheet non deve cancellare la pressione lunga }, LONG);
+      if (!s.mouse) s.timer = setTimeout(() => { if (s && !s.drag && !(tc && tc.st === 'pagina')) { s.long = true; el._longEnd = true; buzz(12); if (gesture && gesture.el === el) gesture = null; openSheet(el, null, true); } }, LONG);   // il gesto resta di questo controllo fino al sollevamento: openSheet non cancella la pressione lunga
     });
     let tc = null;   // decisione del gesto col dito: 'attesa' | 'controllo' | 'pagina'
     el.addEventListener('touchstart', e => {
@@ -9863,7 +9863,7 @@ window.addEventListener('load', () => { (async () => {
 
 
 /* Versione, in fondo alla colonna delle impostazioni: numero e data da src/versione.json, build dall'impronta dei sorgenti (costruisci.py) */
-const APP_VER = {"versione": "1.0", "data": "29 ottobre 2026", "build": "3295e38"};
+const APP_VER = {"versione": "1.0", "data": "29 ottobre 2026", "build": "688570f"};
 { const v = $('appVer'); if (v) {
   ['Matrice e canone ' + APP_VER.versione, APP_VER.data, 'build ' + APP_VER.build].forEach((t, i) => { if (i) v.append(document.createElement('br')); const l = document.createElement('span'); l.textContent = t; v.append(l); }); v.title = 'Versione dell\'app: numero, data e build (cambia con i sorgenti)'; } }
 
