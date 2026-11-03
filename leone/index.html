@@ -125,18 +125,20 @@ h3{font-size:1rem;font-weight:600;margin:0}
 .mfader{-webkit-appearance:none;appearance:none;position:absolute;inset:0;z-index:2;width:100%;height:100%;margin:0;background:transparent;cursor:ew-resize}
 #mClip.clip{background:var(--ruggine);border-color:var(--ruggine);color:var(--su)}
 .rollcol{--rg:12px;min-width:0;display:flex;flex-direction:column}                    /* --rg: la stessa fessura tra piano roll, tastiera e spettro */
-#zoombox{display:flex;align-items:center;gap:10px;margin:8px 0 4px}#zoombox[hidden]{display:none}
-.zmap{position:relative;flex:1;min-width:0;height:24px;border-radius:4px;background:var(--roll-bg);border:1px solid var(--filo);cursor:ns-resize;touch-action:none;user-select:none;-webkit-user-select:none;outline:none}
+#zoombox{display:flex;align-items:center;gap:10px;margin:8px 0 0}   /* niente margine sotto: lo spazio fra la striscia e la maniglia è quello della maniglia, uguale sopra e sotto la sua riga */#zoombox[hidden]{display:none}body.rollOff #zoombox{display:none}   /* piano roll chiuso (solo la barra del tempo): la mini-mappa non serve; riaprendolo torna, con lo zoom di prima */
+.zmap{position:relative;flex:1;min-width:0;height:24px;border-radius:4px;background:var(--roll-bg);border:1px solid var(--filo);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;outline:none}
+.zmap.held{cursor:grabbing}.zmap.zoom{cursor:ns-resize}.zmap.pan{cursor:ew-resize}   /* il cursore: si prende (manina), poi dice il gesto scelto */
 .zmap:focus-visible{box-shadow:0 0 0 2px var(--qd-accent-soft)}
 .zmap canvas{display:block;width:100%;height:100%;opacity:.5;border-radius:3px}
 .zmap b{position:absolute;top:-1px;bottom:-1px;left:0;width:100%;border:1.5px solid var(--qd-accent);border-radius:3px;background:color-mix(in srgb,var(--qd-accent) 8%,transparent);pointer-events:none}@supports not (color:color-mix(in srgb,red,blue)){.zmap b{background:transparent}}
 .zmap b::before,.zmap b::after{content:"";position:absolute;top:2px;bottom:2px;width:2px;border-radius:1px;background:var(--qd-accent)}
 .zmap b::before{left:2px}.zmap b::after{right:2px}
 .zmap u{position:absolute;top:0;bottom:0;left:0;width:1.5px;background:var(--qd-ink);pointer-events:none}
-.zfollow{all:unset;display:flex;align-items:center;gap:5px;font-size:12px;padding:6px 0;font-weight:500;color:var(--qd-ink-3);cursor:pointer;white-space:nowrap}
-.zfollow i{width:6px;height:6px;border-radius:50%;border:1.5px solid var(--qd-ink-3)}
-.zfollow[aria-pressed=true]{color:var(--qd-ink)}.zfollow[aria-pressed=true] i{background:var(--qd-accent);border-color:var(--qd-accent)}
-@media (max-width:760px){#zoombox{margin:10px 0 8px}.zmap{height:34px}.zfollow{font-size:13px;padding:10px 0}}
+.zfollow{all:unset;display:flex;align-items:center;gap:6px;font-size:11px;line-height:1.2;padding:6px 0;margin:-6px 0;   /* l'area di tocco sporge: la striscia resta alta quanto la mini-mappa */
+  font-weight:500;color:var(--qd-ink-3);cursor:pointer;white-space:nowrap}
+.zfollow i{width:8px;height:8px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--qd-ink-3);flex:none}   /* lo stesso pallino dei flag di Quadro (Freeze) */
+.zfollow[aria-pressed=true]{color:var(--qd-ink)}.zfollow[aria-pressed=true] i{background:var(--qd-accent);box-shadow:none}
+@media (max-width:760px){#zoombox{margin:10px 0 0}.zmap{height:34px}.zfollow{font-size:13px;padding:10px 0;margin:-10px 0}}
 .rollbox{position:relative;min-width:0;background:var(--roll-bg);border:1px solid var(--filo);border-radius:10px;overflow:hidden;touch-action:none;cursor:ew-resize}
 #roll{display:block;width:100%;height:96px}
 #rgrip{position:relative;z-index:3;flex:none;height:var(--rg);cursor:ns-resize;display:grid;place-items:center;touch-action:none}
@@ -2159,16 +2161,20 @@ label.filef{display:block}
 #setOv input[type=text],#smOv input[type=text]{background:linear-gradient(var(--bordo),var(--bordo)) bottom/100% 1px no-repeat;border:0;border-radius:0;padding-inline:.1rem}
 #setOv input[type=text]:focus,#smOv input[type=text]:focus{background:linear-gradient(var(--rame),var(--rame)) bottom/100% 2px no-repeat;outline:0}
 /* ---- Segnali: analizzatore più dettagliato (sotto il piano roll) ---- */
-#specbox{display:flex;flex-direction:column}#specbox[hidden]{display:none}
+#specbox{display:flex;flex-direction:column;border:0;background:transparent;border-radius:0;overflow:visible}#specbox[hidden]{display:none}   /* niente riquadro intorno: il riquadro è il grafico, come il piano roll */
 /* il disegno è il prisma di Quadro: pozzo, righe di livello, curva d'accento, etichette nel DOM; la lettura è un'etichetta sopra la curva */
-#specViz{aspect-ratio:auto;height:96px;margin:6px 6px 0;border-radius:6px}
+#specViz{aspect-ratio:auto;height:96px;margin:0;border:1px solid var(--filo);border-radius:var(--qd-radius-well)}
 @media (max-width:999px){#specViz{height:80px}}
 #specViz #spec{height:100%;touch-action:pan-y;cursor:crosshair}
 #specViz .qd-viz__tag,#specViz .qd-viz__axis span{font-family:inherit;font-size:.62rem;font-variant-numeric:tabular-nums}
 .specread{position:absolute;top:4px;z-index:1;padding:2px 6px;border-radius:3px;background:var(--pannello);color:var(--inchiostro);border:1px solid var(--filo);font-size:.72rem;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums;pointer-events:none}
-#specViz[data-frozen]::after{content:"Fermo";background:var(--pannello);color:var(--inchiostro);-webkit-backdrop-filter:none;backdrop-filter:none;border:1px solid var(--filo);z-index:1}
+#specViz[data-frozen]::after{display:none}   /* fermo: lo dice il pallino pieno di Freeze, sul grafico */
+#specViz .specfz{position:absolute;left:6px;bottom:18px;z-index:2;min-height:0;height:auto;line-height:1.2;gap:6px;font-size:11px;font-weight:500;background:var(--velo);padding:1px 7px;border-radius:5px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#specViz .specfz::after{content:"";position:absolute;inset:-8px -6px}   /* l'area di tocco è più grande della targhetta */
+@media (max-width:760px){#specViz .specfz{font-size:13px}}   /* testo e spazi come «Segui» dello zoom: 11 px (13 sul telefono), 6 px fra pallino e parola */
+.specctl[hidden]{display:none}
 
-.specctl{display:flex;flex-wrap:wrap;align-items:center;gap:2px 16px;padding:2px 8px 4px;border-top:1px solid var(--filo);font-size:.8rem}
+.specctl{display:flex;flex-wrap:wrap;align-items:center;gap:2px 16px;padding:2px 2px 0;font-size:.8rem}
 .specctl .qd-seg--app,.scopewin__ctl .qd-seg--app{width:auto;min-width:6.5rem}
 .specctl .qd-seg--app>button,.scopewin__ctl .qd-seg--app>button{min-height:1.9rem;padding:0 .5rem;font-size:.8rem}
 .specf{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
@@ -10053,12 +10059,12 @@ gripTail(); addEventListener('resize', gripTail);
   fol.onclick = () => { Z.follow = !Z.follow; paintFollow(); keep(); redraw(); };
   map.addEventListener('pointerdown', e => { if (!st.piece) return; const r = map.getBoundingClientRect(), v = rollView(st.piece);
     try { map.setPointerCapture(e.pointerId); } catch (err) { /* ok */ }
-    drag = { x0: e.clientX, y0: e.clientY, s0: curSpan(), v00: v.t0, span0: v.span, focus: (e.clientX - r.left) / r.width * v.T, w: r.width, mode: null }; Z.drag = true; });
+    map.classList.add('held'); drag = { x0: e.clientX, y0: e.clientY, s0: curSpan(), v00: v.t0, span0: v.span, focus: (e.clientX - r.left) / r.width * v.T, w: r.width, mode: null }; Z.drag = true; });
   map.addEventListener('pointermove', e => { const d = drag; if (!d || !st.piece) return; const dx = e.clientX - d.x0, dy = e.clientY - d.y0, T = st.piece.totalPulses;
-    if (!d.mode && Math.hypot(dx, dy) > 4) { d.mode = Math.abs(dy) > Math.abs(dx) ? 'zoom' : 'pan'; unfollow(); }
+    if (!d.mode && Math.hypot(dx, dy) > 4) { d.mode = Math.abs(dy) > Math.abs(dx) ? 'zoom' : 'pan'; map.classList.add(d.mode); unfollow(); }
     if (d.mode === 'zoom') setSpan(d.s0 * Math.pow(2, dy / 40), d.focus, (d.focus - d.v00) / d.span0, true);   // su: più vicino
     else if (d.mode === 'pan') { Z.v0 = d.v00 + dx / d.w * T; redraw(); } });
-  ['pointerup', 'pointercancel'].forEach(k => map.addEventListener(k, () => { if (drag && drag.mode === 'zoom' && Z.span) Z.last = Z.span; if (drag) keep(); drag = null; Z.drag = false; }));
+  ['pointerup', 'pointercancel'].forEach(k => map.addEventListener(k, () => { if (drag && drag.mode === 'zoom' && Z.span) Z.last = Z.span; if (drag) keep(); drag = null; Z.drag = false; map.classList.remove('held', 'zoom', 'pan'); }));
   map.addEventListener('dblclick', () => { if (!st.piece) return; if (Z.span) { Z.last = Z.span; setSpan(Infinity, 0, 0); } else setSpan(Z.last, st.pos, 0.25); });
   map.addEventListener('keydown', e => { if (!st.piece) return; const v = rollView(st.piece);
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') setSpan(curSpan() * (e.key === 'ArrowUp' ? 0.5 : 2), v.t0 + v.span / 2, 0.5);
@@ -10740,7 +10746,7 @@ window.addEventListener('load', () => { (async () => {
 
 
 /* Versione, in fondo alla colonna delle impostazioni: numero e data da src/versione.json, build dall'impronta dei sorgenti (costruisci.py) */
-const APP_VER = {"versione": "1.0", "data": "29 ottobre 2026", "build": "d7570ca"};
+const APP_VER = {"versione": "1.0", "data": "29 ottobre 2026", "build": "6e786e2"};
 { const v = $('appVer'); if (v) {
   ['Matrice e canone ' + APP_VER.versione, APP_VER.data, 'build ' + APP_VER.build].forEach((t, i) => { if (i) v.append(document.createElement('br')); const l = document.createElement('span'); l.textContent = t; v.append(l); }); v.title = 'Versione dell\'app: numero, data e build (cambia con i sorgenti)'; } }
 
@@ -12564,6 +12570,8 @@ Par.on('sclUse', renderScl);   // tabella e avviso del riquadro: in ordine per i
   };
   heading('Oscilloscopio'); flag('scopePersist'); field('scopeWinStep', 'Finestra');
   heading('Spettro'); field('specScale', 'Scala delle frequenze'); flag('specPeak'); field('specFft', 'FFT'); field('specOct', 'Smussatura'); field('specRel', 'Rilascio');
+  { const fz = document.getElementById('specFreeze'), viz = document.getElementById('specViz'), ctl = document.getElementById('specCtl');   // Freeze sul grafico, in alto al centro:
+    fz.classList.add('specfz'); viz.append(fz); if (!ctl.children.length) ctl.hidden = true; }                                          // la riga sotto, rimasta con lui solo, non serve più
 })();
 </script>
 </body></html>
