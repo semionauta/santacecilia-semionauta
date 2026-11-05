@@ -3567,7 +3567,7 @@ body{--qd-scope-bg:var(--qd-well);--qd-scope-grid:var(--qd-grid);--qd-scope-ink:
 <li><b>Senza porte.</b> «Scarica .mid» e trascina il file in Live: di solito si importa una clip per voce, con i pitch bend. Il tempo del file è scelto perché i secondi restino quelli dell'app.</li>
 </ol></div></details><details class="adv"><summary>Usare una scheda audio a più uscite (quadrifonia)</summary><div class="advb"><p class="note">Con una scheda a 4 o più uscite ogni voce può avere il suo altoparlante. Funziona in Chrome o Edge su computer; Safari in genere offre solo lo stereo. Il browser usa i canali che il sistema operativo gli mostra: quasi tutto si regola lì.</p><ol class="guide">
 <li><b>Apri il file in Chrome.</b> Apri il file .html direttamente in Chrome o Edge, non dentro l'anteprima di Claude: lì il browser può bloccare la scelta dell'uscita.</li>
-<li><b>La scheda come uscita del sistema.</b> Su Mac: Impostazioni di Sistema → Suono → Uscita, scegli la scheda. Su Windows: Impostazioni → Sistema → Audio → Output. Poi ricarica la pagina. In alternativa scegli la scheda nell'app, in «Dispositivo di uscita»; per vederne i nomi premi «Elenca le uscite audio» e accetta il permesso del microfono, che serve solo a mostrarli.</li>
+<li><b>La scheda come uscita del sistema.</b> Su Mac: Impostazioni di Sistema → Suono → Uscita, scegli la scheda. Su Windows: Impostazioni → Sistema → Audio → Output. Poi ricarica la pagina. In alternativa scegli la scheda nell'app, in «Dispositivo di uscita»; per vederne i nomi premi il tasto di aggiornamento accanto al menu e accetta il permesso del microfono, che serve solo a mostrarli.</li>
 <li><b>I canali che il sistema mostra.</b> Su Mac: apri Configurazione Audio MIDI, seleziona la scheda e, in Uscita, controlla che il formato abbia 4 canali; con «Configura altoparlanti» puoi dire quale uscita è quale. Su Windows: Pannello di controllo → Audio → la scheda → Configura → «Quadrifonia». Se il driver presenta le uscite come coppie separate (1-2 e 3-4), il browser ne vede solo due e la quadrifonia dal browser non è possibile.</li>
 <li><b>Nell'app.</b> In Impostazioni → Audio, la riga in cima dice quanti canali ha il dispositivo. In «Canali in uscita» scegli «4 (quadrifonia)» e premi «Prova tutti in sequenza»: ogni uscita della scheda deve suonare un breve tono, nell'ordine.</li>
 <li><b>Matrice di mandata.</b> «Una voce per canale» manda la voce 1 al canale 1, la 2 al 2 e così via. Ogni cursore è una mandata: una voce può andare su più canali e più voci sullo stesso. Con più di due canali il pan è spento: la posizione si decide qui.</li>
@@ -7430,7 +7430,7 @@ async function refreshDevices(given) {
   if (tok !== devTok) return;
   // aperto come file locale, Chrome non ricorda il permesso: appena il microfono si chiude l'elenco torna vuoto. Si tiene quello letto a permesso attivo.
   if (given || list.some(d => d.label) || list.length >= knownOuts.length) knownOuts = list; else list = knownOuts;
-  Par.opts('outSel', [{ value: '', label: 'Predefinita del sistema' }].concat(list.map((d, i) => ({ value: d.deviceId, label: d.label || 'Uscita ' + (i + 1) + ' (nome nascosto: premi «Elenca le uscite audio»)' }))));
+  Par.opts('outSel', [{ value: '', label: 'Predefinita del sistema' }].concat(list.map((d, i) => ({ value: d.deviceId, label: d.label || 'Uscita ' + (i + 1) + ' (nome nascosto: premi il tasto di aggiornamento)' }))));
   if (outSinkId && !Par.d('outSel').options.some(o => o.value === outSinkId)) { await applyOutputDevice('', 'L\'uscita scelta non è più disponibile: torno a quella predefinita del sistema'); return; }
   Par.set('outSel', outSinkId); outLabel = outSelLabel(); showAudioInfo();
 }
@@ -7983,7 +7983,7 @@ function posFromGain(g, law) {
   if (law === 'db') return Math.max(0, 1 + 20 * Math.log10(Math.min(1, g)) / 60) * 100;
   return (g >= 0.001 ? Math.cbrt(g) : g / 0.01) * 100;
 }
-const isMuted = v => !!(voiceMute[v] || ((voiceSolo.size > 0 || (window.__vcReady && VIN.solo)) && !voiceSolo.has(v)));   // sempre vero o falso: classList.toggle con «undefined» inverte la classe invece di toglierla   // anche il solo della voce in ingresso zittisce le altre                     // silenziata a mano, oppure fuori da un solo
+const isMuted = v => !!(voiceMute[v] || ((voiceSolo.size > 0 || (window.__vcReady && VIN.solo && VIN.on)) && !voiceSolo.has(v)));   // sempre vero o falso: classList.toggle con «undefined» inverte la classe invece di toglierla   // anche il solo della voce in ingresso zittisce le altre                     // silenziata a mano, oppure fuori da un solo
 const busGain = v => !synthAudible() || isMuted(v) ? 0 : vgLin(v);
 function synthGateApply() {
   if (!ac || !playing) return;
@@ -8069,7 +8069,7 @@ const FMIX = {   // i testi dei valori: gli stessi per la riga del mix, il callo
   row('mxMic', '--vmic', 'Mic', vol('vcLevel', 'vcLevelV', 'Il volume di tutto il canale del microfono: voce pulita, raddoppi e riverbero. Da silenzio a +6 dB; la tacca segna 0 dB.') +
     '<label class="f" data-g="vn" data-help="Pan|La posizione della voce pulita tra sinistra e destra; i raddoppi hanno il loro pan nel pannello Raddoppi. Doppio clic: al centro."><span class="fh"><span>Pan</span><output id="vcDryPanV" hidden>centro</output></span><div id="vcDryPan" class="qd-range"></div></label>' +
     none('vp', 'Fase', 'Il microfono non ha una fase: vale solo per le note delle voci del sintetizzatore.', true),
-    '<button id="vcMute" aria-pressed="false" aria-label="Silenzia il microfono" title="Silenzia il microfono" data-help="Silenzia|Il microfono e i suoi raddoppi tacciono, l\'ingresso resta acceso. Toglie il Solo del microfono.">M</button><button id="vcSolo" aria-pressed="false" aria-label="Solo microfono" title="Solo microfono" data-help="Solo|Si sente solo il microfono, con i suoi raddoppi: le voci del synth tacciono. Funziona insieme ai solo delle voci: si sente tutto ciò che è in solo. Toglie il Silenzia del microfono.">S</button>');
+    '<button id="vcMute" aria-pressed="false" aria-label="Silenzia il microfono" title="Silenzia il microfono" data-help="Silenzia|Il microfono e i suoi raddoppi tacciono, l\'ingresso resta acceso. Toglie il Solo del microfono.">M</button><button id="vcSolo" aria-pressed="false" aria-label="Solo microfono" title="Solo microfono" data-help="Solo|Si sente solo il microfono, con i suoi raddoppi: le voci del synth tacciono. Vale solo con l\'ingresso acceso. Funziona insieme ai solo delle voci: si sente tutto ciò che è in solo. Toglie il Silenzia del microfono.">S</button>');
   row('mxSub', '--tenue', 'Sub', vol('subFader', 'subFaderV', 'Il volume del sub rispetto a una voce: a 0 dB è forte come una nota delle voci. Da silenzio a +6 dB; il sub porta molta energia: il limitatore lavorerà di più. Si accende nel pannello Sub.') +
     none('vn', 'Pan', 'Il sub sta sempre al centro: con più canali in uscita si sceglie il canale nel pannello Sub.') + none('vp', 'Fase', 'Il sub non ha una fase: vale solo per le note delle voci del sintetizzatore.', true),
     '<button id="vmSub" aria-pressed="false" aria-label="Silenzia il sub" title="Silenzia il sub" data-help="Silenzia|Il sub tace. Con il sub spento nel suo pannello la riga è in grigio.">M</button><button id="vsSub" disabled aria-label="Il sub non ha il solo" title="Il sub non ha il solo" data-help="Solo|Il sub segue le voci che si sentono, quindi non ha un suo solo: metti in solo una voce e il sub la segue.">S</button>');
@@ -10096,7 +10096,7 @@ gripTail(); addEventListener('resize', gripTail);
     if (d.mode === 'zoom') setSpan(d.s0 * Math.pow(2, -dy / 40), d.focus, (d.focus - d.v00) / d.span0, true);   // giù: più vicino; su: verso tutto il brano
     else if (d.mode === 'pan') { Z.v0 = d.v00 + dx / d.w * T; redraw(); } });
   ['pointerup', 'pointercancel'].forEach(k => map.addEventListener(k, () => { if (drag && drag.mode === 'zoom' && Z.span) Z.last = Z.span; if (drag) keep(); drag = null; Z.drag = false; map.classList.remove('held', 'zoom', 'pan'); }));
-  map.addEventListener('dblclick', () => { if (!st.piece) return; if (Z.span) { Z.last = Z.span; setSpan(Infinity, 0, 0); } else setSpan(Z.last, st.pos, 0.25); });
+  map.addEventListener('dblclick', () => { if (!st.piece) return; if (Z.span) { Z.last = Z.span; setSpan(Infinity, 0, 0); } else setSpan(Math.min(Z.last, st.piece.totalPulses / 2), st.pos, 0.25); });   // l'ultimo zoom può venire da un brano più lungo
   map.addEventListener('keydown', e => { if (!st.piece) return; const v = rollView(st.piece);
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') setSpan(curSpan() * (e.key === 'ArrowUp' ? 2 : 0.5), v.t0 + v.span / 2, 0.5);
     else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { unfollow(); Z.v0 += (e.key === 'ArrowRight' ? 0.25 : -0.25) * v.span; redraw(); } else return; e.preventDefault(); e.stopPropagation(); });
@@ -10779,7 +10779,7 @@ window.addEventListener('load', () => { (async () => {
 
 
 /* Versione, in fondo alla colonna delle impostazioni: numero e data da src/versione.json, build dall'impronta dei sorgenti (costruisci.py) */
-const APP_VER = {"versione": "1.0", "data": "29 ottobre 2026", "build": "9f763b2"};
+const APP_VER = {"versione": "1.0", "data": "29 ottobre 2026", "build": "643d028"};
 { const v = $('appVer'); if (v) {
   ['Matrice e canone ' + APP_VER.versione, APP_VER.data, 'build ' + APP_VER.build].forEach((t, i) => { if (i) v.append(document.createElement('br')); const l = document.createElement('span'); l.textContent = t; v.append(l); }); v.title = 'Versione dell\'app: numero, data e build (cambia con i sorgenti)'; } }
 
@@ -11029,8 +11029,9 @@ function recArmBegin() {                                                     // 
 }
 /* I gruppi di canali entrano nello stesso worklet: contatore e pacchetti
    condivisi anche quando le tracce superano i 32 canali di un ingresso. */
+const RAW_CLOCK_ISSUE = 'Clock audio discontinuo: campioni ricevuti conservati in ordine di acquisizione.';
 function recCaptureState(r) {
-  const state = { received: 0, nextOffset: 0, nextSequence: 0, firstFrame: null, origin: null, rawEnd: null,
+  const state = { received: 0, nextOffset: 0, nextSequence: 0, firstFrame: null, origin: null, rawEnd: null, rawOrigin: null, clockPending: false,
     missingFrames: 0, missingBlocks: 0, duplicateFrames: 0, clockGaps: 0, clockOverlaps: 0, clockChanges: 0, events: [], blocks: [] };
   r.captureStats.push(state); return state;
 }
@@ -11062,8 +11063,12 @@ function recCaptureTake(r, state, streams, m) {
     state.clockChanges++; state.clockGaps += Math.max(0, delta); state.clockOverlaps += Math.max(0, -delta);
     streams.forEach(({ stream }) => { stream.clockGaps += Math.max(0, delta); stream.clockOverlaps += Math.max(0, -delta); });
     if (state.events.length < 32) state.events.push({ offset, rawFrame, expectedRawFrame: expectedRaw });
-    recIssue(r, 'Clock audio discontinuo: campioni ricevuti conservati in ordine di acquisizione.');
   }
+  // Un solo blocco con il timbro sbagliato, di nuovo in orario al blocco dopo, non ha perso né ripetuto campioni: resta nel rapporto, senza segnalare il file.
+  if (state.rawOrigin === null) state.rawOrigin = rawFrame - offset;
+  if (rawFrame - offset === state.rawOrigin) state.clockPending = false;
+  else if (state.clockPending || n > 128) recIssue(r, RAW_CLOCK_ISSUE);       // i pacchetti raccolgono più blocchi: fuori orario per più di uno è un salto vero
+  else state.clockPending = true;
   if (state.firstFrame === null) { state.firstFrame = f; state.origin = f - offset; }
   const logicalFrame = state.firstFrame + state.received;
   const block = { sequence, offset, frames: n, sourceFrame: f, rawFrame, rawEndFrame, logicalFrame };
@@ -11072,6 +11077,7 @@ function recCaptureTake(r, state, streams, m) {
   state.received += n; state.nextOffset = offset + n; state.nextSequence = sequence + 1; state.rawEnd = rawEndFrame;
 }
 function recCaptureEnd(r, state, streams, m) {
+  if (state.clockPending) recIssue(r, RAW_CLOCK_ISSUE);                        // l'ultimo blocco non ha potuto dire se il clock tornava in orario
   if (!Number.isSafeInteger(m.sequence) || !Number.isSafeInteger(m.frames) || m.sequence < state.nextSequence || m.frames < state.nextOffset) {
     recIssue(r, 'Chiusura del registratore incoerente: conserva i campioni disponibili.'); return;
   }
@@ -11932,7 +11938,7 @@ function vcBuild() {                                                           /
   n.gate.connect(n.hp); n.hp.connect(n.low); n.low.connect(n.mid); n.mid.connect(n.high); n.high.connect(n.comp); n.comp.connect(n.make);
   n.anC = own(c.createAnalyser()); n.anC.fftSize = 1024; n.high.connect(n.anC); n.bufC = new Float32Array(1024); n.lvC = -100;   // livello che entra nel compressore, per il punto sul grafico
   const pan = () => typeof c.createStereoPanner === 'function' ? own(c.createStereoPanner()) : st2(g(1));
-  n.mix = st2(g(1));                                                         // somma di ciò che va nel suono: voce pulita (se non c'è l'ascolto diretto) e strati
+  n.mix = st2(g(1));                                                         // somma di ciò che va nel suono: voce pulita e strati
   n.dryG = g(1); n.dryPan = pan(); n.dryOut = st2(g(1)); n.make.connect(n.dryG); n.dryG.connect(n.dryPan); n.dryPan.connect(n.dryOut);
   n.dryOut.connect(n.mix);
   if (VIN.wk) {
@@ -12090,7 +12096,7 @@ async function vcStart() {
       tr.addEventListener('ended', () => { if (VIN.stream === s && (VIN.on || VIN.starting)) { vcStop(); toast('L\'ingresso audio si è scollegato'); } });
       tr.addEventListener('mute', () => { if (VIN.stream === s && VIN.on && !document.hidden) toast('L\'ingresso è in pausa: il sistema ha dato il microfono a un\'altra app'); });   // iOS: chiamata, Siri, un'altra app che registra
     }
-    vcBuild(); VIN.on = true; VIN.timer = setInterval(vcTick, 100);
+    vcBuild(); VIN.on = true; VIN.timer = setInterval(vcTick, 100); if (VIN.solo) applyMix();   // il solo del microfono zittisce le voci solo a ingresso acceso
     if (playing && typeof bgRoute === 'function') bgRoute();                    // con l'ingresso acceso l'uscita va diretta: il lettore in sottofondo di iOS chiuderebbe il microfono
     await vcDevices();
     if (epoch !== VIN.epoch) return false;
@@ -12108,7 +12114,7 @@ function vcStop() {
   VIN.f0 = 0; VIN.wk = false;
   if (navigator.audioSession) { try { navigator.audioSession.type = 'auto'; } catch (err) { /* ok */ } }
   if (playing && typeof bgRoute === 'function') bgRoute();                      // di nuovo, se scelto, il lettore in sottofondo
-  $('vcLvl').style.transform = 'scaleX(0)'; $('vcPk').style.transform = 'translateX(-100%)'; $('vcDbV').textContent = '−∞'; VIN.pk = null; vcShow();
+  $('vcLvl').style.transform = 'scaleX(0)'; $('vcPk').style.transform = 'translateX(-100%)'; $('vcDbV').textContent = '−∞'; VIN.pk = null; vcShow(); if (VIN.solo) applyMix();
 }
 async function vcDevices() {                                                   // l'elenco degli ingressi: i nomi arrivano solo dopo il permesso
   if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
